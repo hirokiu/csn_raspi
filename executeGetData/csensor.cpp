@@ -14,18 +14,18 @@
 
 #include "mysql.h"
  
-/*
 // local MySQL
 const char *hostname = "localhost";
 const char *username = "root";
-const char *password = "xs34dwe2";
-const char *database = "dev_qcn";
-*/
+const char *password = "";
+const char *database = "csn";
+/*
 // balog.jp MySQL
 const char *hostname = "balog.jp";
 const char *username = "ycucoc";
 const char *password = "xs34dwe2";
 const char *database = "dev_ycucoc";
+*/
 unsigned long portnumber = 3306;
 char insert_q[500];
 
@@ -153,9 +153,6 @@ inline bool CSensor::mean_xyz(const bool bVerbose)
 
    *px2 = *py2 = *pz2 = *pt2 = 0.0f;  // zero sample averages
  
-   if (m_bSingleSampleDT) // just one sample, i.e. the hardware does the sampling a la the JoyWarrior USB sensor
-      sm->lSampleSize = 1; 
-		 
    // this will get executed at least once, then the time is checked to see if we have enough time left for more samples
    do {
        if (sm->lSampleSize < SAMPLE_SIZE) {  // note we only get a sample if sample size < 10
@@ -164,7 +161,7 @@ inline bool CSensor::mean_xyz(const bool bVerbose)
 	   *px2 += x1; 
            *py2 += y1; 
            *pz2 += z1; 
-       	   if (!m_bSingleSampleDT) sm->lSampleSize++; // only increment if not a single sample sensor
+       	   sm->lSampleSize++; // only increment if not a single sample sensor
         }  // done sample size stuff
 
        // dt is in seconds, want to slice it into 10 (SAMPLING_FREQUENCY), put into microseconds, so multiply by 100000
@@ -198,7 +195,7 @@ inline bool CSensor::mean_xyz(const bool bVerbose)
    if (bVerbose) {
         // INSERT to MySQL
             sprintf(insert_q,
-                        "INSERT INTO Event (device_id, t0check, t0active, x_acc, y_acc, z_acc, sample_size, offset) VALUES('1', '%f', '%f', '%f', '%f', '%f', '%ld', '%ld')",
+                        "INSERT INTO Event (device_id, t0check, t0active, x_acc, y_acc, z_acc, sample_size, offset) VALUES('3', '%f', '%f', '%f', '%f', '%f', '%ld', '%ld')",
                             sm->t0check, *pt2, *px2, *py2, *pz2, sm->lSampleSize, sm->lOffset);
             query(insert_q);
             //printf("Query = %s\n\n", insert_q);
