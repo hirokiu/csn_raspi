@@ -1,1 +1,2 @@
 */1 * * * * /home/pi/csn_raspi/active/chk.sh
+05 * * * * /home/pi/csn_raspi/tools/dailyDump.sh
