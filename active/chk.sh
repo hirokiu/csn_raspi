@@ -10,7 +10,6 @@ EXEC_CMD=${BASE_DIR}/executeGetData/localExecute
 IS_RUN=`ps -ef | grep ${EXEC_CMD} | grep -v | wc -l`
 if [ ${IS_RUN} = 0 ]; then
   ${BASE_DIR}/tools/runSMSExecute.sh
-else
 fi
 
 START=${TARGET_DIR}/start.txt
