@@ -3,9 +3,9 @@
 BASE_DIR=/home/pi/csn_raspi
 TARGET_DIR=${BASE_DIR}/data
 
-LASTDATE=`date +"%Y-%m-%d %I:00"`
+LASTDATE=`date +"%Y-%m-%d %H:00"`
 LASTDATE_TIME=`date -d "${LASTDATE}" +"%s"`
-LASTDATE=`date -d "${LASTDATE}" +"%Y%m%d%I"`
+LASTDATE=`date -d "${LASTDATE}" +"%Y%m%d%H"`
 
 DB_NAME=csn
 TABLE=Event
