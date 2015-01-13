@@ -26,7 +26,7 @@ else
     endif
 endif
 
-BINARY   = smstest
+BINARY   = smsExecute
 CCFLAGS  = -g -O0 $(THREAD)
 LDFLAGS  = 
 INCLUDES = -I/usr/include/mysql/

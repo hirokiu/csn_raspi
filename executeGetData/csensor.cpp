@@ -14,6 +14,10 @@
 
 #include "mysql.h"
  
+// device ID
+// TODO:set from argv
+const int device_id = 1;
+
 // local MySQL
 const char *hostname = "localhost";
 const char *username = "root";
@@ -195,8 +199,8 @@ inline bool CSensor::mean_xyz(const bool bVerbose)
    if (bVerbose) {
         // INSERT to MySQL
             sprintf(insert_q,
-                        "INSERT INTO Event (device_id, t0check, t0active, x_acc, y_acc, z_acc, sample_size, offset) VALUES('3', '%f', '%f', '%f', '%f', '%f', '%ld', '%ld')",
-                            sm->t0check, *pt2, *px2, *py2, *pz2, sm->lSampleSize, sm->lOffset);
+                        "INSERT INTO Event (device_id, t0check, t0active, x_acc, y_acc, z_acc, sample_size, offset) VALUES('%d', '%f', '%f', '%f', '%f', '%f', '%ld', '%ld')",
+                            device_id, sm->t0check, *pt2, *px2, *py2, *pz2, sm->lSampleSize, sm->lOffset);
             query(insert_q);
             //printf("Query = %s\n\n", insert_q);
 

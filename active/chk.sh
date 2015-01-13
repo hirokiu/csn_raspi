@@ -6,7 +6,7 @@ TARGET_DIR=${BASE_DIR}/active
 LASTTIME=`date +'%s'`
 
 # process check
-EXEC_CMD=${BASE_DIR}/executeGetData/localExecute
+EXEC_CMD=${BASE_DIR}/executeGetData/smsExecute
 IS_RUN=`ps -ef | grep ${EXEC_CMD} | grep -v grep | wc -l`
 if [ ${IS_RUN} = 0 ]; then
   ${BASE_DIR}/tools/runSMSExecute.sh
