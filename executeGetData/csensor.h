@@ -22,47 +22,68 @@
 // this is the base class for all QCN sensors
 class CSensor
 {
-   private:
-      // private member vars
-      e_sensor m_iType; // what type of sensor, i.e. Thinkpad, HP, USB?
-      int m_port;  // port number, -1 if no sensor opened, if >-1 then we have a port number (i.e. joystick port, Apple I/O port, subclass-specific)
-      bool m_bSingleSampleDT; // set to true if just want a single sample per dt interval
-      std::string m_strSensor;  // identifying string (optional, can also use getTypeStr() for a generic sensor name)  
+	private:
+		// private member vars
+		e_sensor m_iType; // what type of sensor, i.e. Thinkpad, HP, USB?
+		int m_port;  // port number, -1 if no sensor opened, if >-1 then we have a port number (i.e. joystick port, Apple I/O port, subclass-specific)
+		bool m_bSingleSampleDT; // set to true if just want a single sample per dt interval
+		std::string m_strSensor;  // identifying string (optional, can also use getTypeStr() for a generic sensor name)
 
-      // private function
-      virtual bool read_xyz(float& x1, float& y1, float& z1) = 0;   // read raw sensor data, pure virtual function subclass implemented  
+		// akisue adding member vars
+		class PreserveXYZ
+		{
+			public:
+				float tmp_x, tmp_y, tmp_z;
+				double tmp_t, tmp_id_t;
+				long int sampleSize, offSet;
 
-   public:
-     CSensor();
-     virtual ~CSensor();  // virtual destructor that will basically just call closePort
+				PreserveXYZ(const float* x, const float* y, const float* z, const double* t, const double* id_t, const long int* size, const long int* offset)
+				{
+					tmp_x = *x; tmp_y = *y; tmp_z = *z;
+					tmp_t = *t; tmp_id_t = *id_t;
+					sampleSize = *size; offSet = *offset;
+				}
+		};
+		vector<PreserveXYZ> preserve_xyz;
+		vector<PreserveXYZ> past_preserve_xyz;
 
-     void setPort(const int iPort = -1);
-     int getPort();
+		// private function
+		virtual bool read_xyz(float& x1, float& y1, float& z1) = 0;   // read raw sensor data, pure virtual function subclass implemented
 
-     void setType(e_sensor esType = SENSOR_NOTFOUND);
+		//akisue
+		virtual bool isStrikeEarthQuake();
+		virtual bool isQuitRecording();
 
-     const char* getSensorStr();
-     void setSensorStr(const char* strIn = NULL);
+	public:
+		CSensor();
+		virtual ~CSensor();  // virtual destructor that will basically just call closePort
 
-     bool getSingleSampleDT();
-     void setSingleSampleDT(const bool bSingle);
+		void setPort(const int iPort = -1);
+		int getPort();
 
-    // MySQL functions
-     int connectDatabase();
-     void closeDatabase();
-     void freeResult(MYSQL_RES * );
-     MYSQL_RES *query(char *);
-     MYSQL_ROW fetchRow(MYSQL_RES *);
+		void setType(e_sensor esType = SENSOR_NOTFOUND);
 
-     // pure virtual functions that subclasses of CSensor (for specific sensor types) need to implement
-     virtual bool detect() = 0;   // this detects & initializes a sensor on a Mac G4/PPC or Intel laptop, sets m_iType to 0 if not found
+		const char* getSensorStr();
+		void setSensorStr(const char* strIn = NULL);
 
-     // public virtual functions implemented in CSensor but can be overridden
-     virtual void closePort(); // closes the port if open
-     virtual const e_sensor getTypeEnum(); // return the iType member variable
-     virtual const char* getTypeStr();  // return the iType member variable
-     virtual bool mean_xyz(const bool bVerbose);   // mean sensor data, implemented here but can be overridden, not virtual
+		bool getSingleSampleDT();
+		void setSingleSampleDT(const bool bSingle);
+
+		// MySQL functions
+		int connectDatabase();
+		void closeDatabase();
+		void freeResult(MYSQL_RES * );
+		MYSQL_RES *query(char *);
+		MYSQL_ROW fetchRow(MYSQL_RES *);
+
+		// pure virtual functions that subclasses of CSensor (for specific sensor types) need to implement
+		virtual bool detect() = 0;   // this detects & initializes a sensor on a Mac G4/PPC or Intel laptop, sets m_iType to 0 if not found
+
+		// public virtual functions implemented in CSensor but can be overridden
+		virtual void closePort(); // closes the port if open
+		virtual const e_sensor getTypeEnum(); // return the iType member variable
+		virtual const char* getTypeStr();  // return the iType member variable
+		virtual bool mean_xyz(const bool bVerbose);   // mean sensor data, implemented here but can be overridden, not virtual
 };
 
 #endif
-

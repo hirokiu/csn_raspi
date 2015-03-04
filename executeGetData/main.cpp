@@ -11,7 +11,7 @@ CQCNShMem* sm = NULL;
 // add your sensor class below, i.e. CSensorTest
 int main(int argc, char** argv)
 {
-    const float RUN_SECONDS = 10.0f; // how many seconds to run -- max is 200 seconds (or bump up MAXI in define.h to RUN_SECONDS / DT )
+    const float RUN_SECONDS = 100.0f; // how many seconds to run -- max is 200 seconds (or bump up MAXI in define.h to RUN_SECONDS / DT )
 
     int iRetVal = 0, iErrCnt = 0;
     sm = new CQCNShMem();
@@ -28,9 +28,9 @@ int main(int argc, char** argv)
        sms.connectDatabase();
 
        // assuming we're at 50Hz, run 500 times for 10 seconds of output, note array only holds 10,000 so don't go past that!
-       //for (sm->lOffset = 0; sm->lOffset < (int) (RUN_SECONDS / DT); sm->lOffset++) {
-       while(true){
-           //sm->lOffset++;
+			 //sm->lOffset++;	//debug
+       for (sm->lOffset = 0; sm->lOffset < (int) (RUN_SECONDS / DT); sm->lOffset++) {	//debug
+       //while(true){
            if (!sms.mean_xyz(true)) iErrCnt++;   // pass in true for verbose output, false for silent
        }
 
@@ -50,7 +50,6 @@ int main(int argc, char** argv)
     }
 
     return iRetVal;
-
 }
 
 // handle function from boinc/lib/util.C to get epoch time as a double

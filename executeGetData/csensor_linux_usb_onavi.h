@@ -29,20 +29,18 @@
 // this is the Windows implementation of the sensor - IBM/Lenovo Thinkpad, HP, USB Stick
 class CSensorLinuxUSBONavi  : public CSensor
 {
-   private:
-    int m_fd;
-     unsigned short m_usBitSensor;
+	private:
+		int m_fd;
+		unsigned short m_usBitSensor;
 
-      virtual bool read_xyz(float& x1, float& y1, float& z1);
+		virtual bool read_xyz(float& x1, float& y1, float& z1);
 
-   public:
-      CSensorLinuxUSBONavi();
-      virtual ~CSensorLinuxUSBONavi();
+		public:
+			CSensorLinuxUSBONavi();
+			virtual ~CSensorLinuxUSBONavi();
 
-     virtual void closePort(); // closes the port if open
-     virtual bool detect(); 
+			virtual void closePort(); // closes the port if open
+			virtual bool detect(); 
 };
-
-
 
 //#endif
