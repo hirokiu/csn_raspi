@@ -29,10 +29,10 @@ const char *database = "csn";
 */
 
 // balog.jp MySQL
-const char *hostname = "balog.jp";
-const char *username = "ycucoc";
-const char *password = "xs34dwe2";
-const char *database = "dev_ycucoc";
+const char *hostname = "";
+const char *username = "";
+const char *password = "";
+const char *database = "";
 
 unsigned long portnumber = 3306;
 char insert_q[500];
@@ -68,8 +68,8 @@ double startRecordTime;
 bool isEarthQuake = false;
 
 CSensor::CSensor()
-  : 
-    m_iType(SENSOR_NOTFOUND), 
+  :
+    m_iType(SENSOR_NOTFOUND),
     m_port(-1),
     m_bSingleSampleDT(false),
     m_strSensor("")
@@ -77,8 +77,8 @@ CSensor::CSensor()
 }
 /*
 CSensor::CSensor(int d_id, double x_off, double y_off, double z_off)
-  : 
-    m_iType(SENSOR_NOTFOUND), 
+  :
+    m_iType(SENSOR_NOTFOUND),
     m_port(-1),
     m_bSingleSampleDT(false),
     m_strSensor("")
@@ -104,7 +104,7 @@ void CSensor::setSingleSampleDT(const bool bSingle)
    m_bSingleSampleDT = bSingle;
 }
 
-const char* CSensor::getSensorStr() 
+const char* CSensor::getSensorStr()
 {
    return m_strSensor.c_str();
 }
@@ -127,7 +127,7 @@ void CSensor::setPort(const int iPort)
    m_port = iPort;
 }
 
-int CSensor::getPort() 
+int CSensor::getPort()
 {
    return m_port;
 }
@@ -193,7 +193,7 @@ inline bool CSensor::mean_xyz(const bool bVerbose)
 	py2 = (float*) &(sm->y0[sm->lOffset]);
 	pz2 = (float*) &(sm->z0[sm->lOffset]);
 	pt2 = (double*) &(sm->t0[sm->lOffset]);
-	sm->lSampleSize = 0L; 
+	sm->lSampleSize = 0L;
 
 	*px2 = *py2 = *pz2 = *pt2 = 0.0f;  // zero sample averages
 
@@ -222,7 +222,7 @@ inline bool CSensor::mean_xyz(const bool bVerbose)
 	}
 	while (dTimeDiff > 0.0f);
 
-	//fprintf(stdout, "Sensor sampling info:  t0check=%f  t0active=%f  diff=%f  timeadj=%d  sample_size=%ld, dt=%f\n", 
+	//fprintf(stdout, "Sensor sampling info:  t0check=%f  t0active=%f  diff=%f  timeadj=%d  sample_size=%ld, dt=%f\n",
 	//   sm->t0check, sm->t0active, dTimeDiff, sm->iNumReset, sm->lSampleSize, sm->dt);
 	//fprintf(stdout, "sensorout,%f,%f,%f,%d,%ld,%f\n",
 	//   sm->t0check, sm->t0active, dTimeDiff, sm->iNumReset, sm->lSampleSize, sm->dt);
@@ -231,9 +231,9 @@ inline bool CSensor::mean_xyz(const bool bVerbose)
 	lLastSample = sm->lSampleSize;
 
 	// store values i.e. divide by sample size
-	*px2 /= (double) sm->lSampleSize; 
-	*py2 /= (double) sm->lSampleSize; 
-	*pz2 /= (double) sm->lSampleSize; 
+	*px2 /= (double) sm->lSampleSize;
+	*py2 /= (double) sm->lSampleSize;
+	*pz2 /= (double) sm->lSampleSize;
 	*pt2 = sm->t0active; // save the time into the array, this is the real clock time
 
 	if (bVerbose) {
@@ -362,25 +362,25 @@ bool CSensor::isStrikeEarthQuake()
 
 /*
 int main(){
- 
+
   MYSQL_RES *res;
   MYSQL_ROW row;
- 
+
   if (!connectDatabase()){
     printf("error connect databasen");
   };
- 
+
   query("INSERT INTO test VALUES('hoge','hoge')");
- 
+
   res = query("SELECT * FROM test;");
- 
+
   printf("%20s %20s n", "COLUMN_A", "COLUMN_B");
   while( (row = fetchRow(res)) != NULL ){
     printf("%10s %20s n", row[0], row[1]);
   }
- 
+
   closeDatabase();
- 
+
 }
 */
 
@@ -406,28 +406,27 @@ void CSensor::closeDatabase(){
   }
   mysql_close(mysql);
 }
- 
+
 MYSQL_RES *CSensor::query(char *sql_string){
   if(g_res){
     freeResult(g_res);
     g_res = NULL;
   }
- 
+
   if (mysql_query(mysql, sql_string)) {
     printf("error: %sn", mysql_error(mysql));
     return NULL;
   }
- 
+
   g_res = mysql_use_result(mysql);
   return g_res;
 }
- 
+
 MYSQL_ROW CSensor::fetchRow(MYSQL_RES *res){
   return mysql_fetch_row(res);
 }
- 
+
 void CSensor::freeResult(MYSQL_RES *res){
   mysql_free_result(res);
   g_res = NULL;
 }
- 
