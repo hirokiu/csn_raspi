@@ -260,7 +260,7 @@ inline bool CSensor::mean_xyz(const bool bVerbose)
 
 		if(isEarthQuake) { // While a recordTime, couldn't check isEarthQuake
 			if(isQuitRecording()) {
-				printf("Recording quits at %f\n", sm->t0check);
+				//printf("Recording quits at %f\n", sm->t0check);
 				isEarthQuake = false;
 			}
 		} else { // Only check isEarthQuake
@@ -323,15 +323,15 @@ bool CSensor::isStrikeEarthQuake()
 		if( fabs(LTA_average * limitTimes) < fabs(STA_average) ) {
 			triggerCount++;
 
-			fprintf(stdout, "%f %f %f %f %f  - Trigger COUNT = %d\n\n", LTA_z, STA_z, LTA_average, STA_average, (LTA_average - STA_average), triggerCount);
+			//fprintf(stdout, "%f %f %f %f %f  - Trigger COUNT = %d\n\n", LTA_z, STA_z, LTA_average, STA_average, (LTA_average - STA_average), triggerCount);
 			if( triggerCount == triggerLimit ){
 				triggerCount = 0;
 				startRecordTime = preserve_xyz.back().tmp_id_t;
-				printf("Recording starts at %f\n", startRecordTime);	//for logging
+				//printf("Recording starts at %f\n", startRecordTime);	//for logging
 
                 // Trigger event execute.
-                sprintf(system_cmd, "/bin/sh /home/pi/csn_raspi/tools/propagation.sh %d %f", device_id, startRecordTime);
-                printf("cmd - %s\n",system_cmd);
+                sprintf(system_cmd, "nohup /home/pi/csn_raspi/tools/propagation.sh %d %f &", device_id, startRecordTime);
+                //printf("cmd - %s\n",system_cmd);
                 system(system_cmd);
 
 				return true;
