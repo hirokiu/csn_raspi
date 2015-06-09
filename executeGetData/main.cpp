@@ -29,8 +29,8 @@ int main(int argc, char** argv)
 
        // assuming we're at 50Hz, run 500 times for 10 seconds of output, note array only holds 10,000 so don't go past that!
 			 //sm->lOffset++;	//debug
-       for (sm->lOffset = 0; sm->lOffset < (int) (RUN_SECONDS / DT); sm->lOffset++) {	//debug
-       //while(true){
+       //for (sm->lOffset = 0; sm->lOffset < (int) (RUN_SECONDS / DT); sm->lOffset++) {	//debug
+       while(true){
            if (!sms.mean_xyz(true)) iErrCnt++;   // pass in true for verbose output, false for silent
        }
 

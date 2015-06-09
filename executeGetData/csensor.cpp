@@ -23,7 +23,7 @@ using namespace std;
 // device ID
 // TODO:set from argv
 //const int device_id;
-int device_id;
+const int device_id = 41;
 
 // local MySQL
 const char *hostname = "localhost";
@@ -67,7 +67,7 @@ const float limitTimes = 3.0f;
 const int triggerLimit = 4;
 int triggerCount = 0;
 
-const double recordTime = 300.0f; //second
+const double recordTime = 60.0f; //second
 double startRecordTime;
 
 bool isEarthQuake = false;
@@ -320,7 +320,7 @@ bool CSensor::isStrikeEarthQuake()
 		if( fabs(LTA_average * limitTimes) < fabs(STA_average) ) {
 			triggerCount++;
 
-			//fprintf(stdout, "%f %f %f %f %f %d\n\n", LTA_z, STA_z, LTA_average, STA_average, (LTA_average - STA_average), triggerCount);
+			fprintf(stdout, "%f %f %f %f %f  - Trigger COUNT = %d\n\n", LTA_z, STA_z, LTA_average, STA_average, (LTA_average - STA_average), triggerCount);
 			if( triggerCount == triggerLimit ){
 				triggerCount = 0;
 				startRecordTime = preserve_xyz.back().tmp_id_t;
