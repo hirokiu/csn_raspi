@@ -23,7 +23,7 @@ using namespace std;
 // device ID
 // TODO:set from argv
 //const int device_id;
-const int device_id = 41;
+const int device_id = 28;
 
 // local MySQL
 const char *hostname = "localhost";
@@ -71,6 +71,9 @@ const double recordTime = 60.0f; //second
 double startRecordTime;
 
 bool isEarthQuake = false;
+
+// cmd name
+char system_cmd[255];
 
 CSensor::CSensor()
   :
@@ -325,6 +328,12 @@ bool CSensor::isStrikeEarthQuake()
 				triggerCount = 0;
 				startRecordTime = preserve_xyz.back().tmp_id_t;
 				printf("Recording starts at %f\n", startRecordTime);	//for logging
+
+                // Trigger event execute.
+                sprintf(system_cmd, "/bin/sh /home/pi/csn_raspi/tools/propagation.sh %d %f", device_id, startRecordTime);
+                printf("cmd - %s\n",system_cmd);
+                system(system_cmd);
+
 				return true;
 			}
 			else return false;
