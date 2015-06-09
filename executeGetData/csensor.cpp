@@ -11,9 +11,14 @@
 
 #include "csensor.h"
 #include <math.h>
+#include <cmath>
+#include <complex>
+//#include <except.h>
 
 #include "mysql.h"
 #include <pthread.h>
+
+using namespace std;
 
 // device ID
 // TODO:set from argv
@@ -21,18 +26,18 @@
 int device_id;
 
 // local MySQL
-/*
 const char *hostname = "localhost";
 const char *username = "root";
-const char *password = "xs34dwe2";
+const char *password = "";
 const char *database = "csn";
-*/
 
-// balog.jp MySQL
+// seismic.balog.jp MySQL
+/*
 const char *hostname = "";
 const char *username = "";
 const char *password = "";
 const char *database = "";
+*/
 
 unsigned long portnumber = 3306;
 char insert_q[500];
@@ -237,45 +242,27 @@ inline bool CSensor::mean_xyz(const bool bVerbose)
 	*pt2 = sm->t0active; // save the time into the array, this is the real clock time
 
 	if (bVerbose) {
+		// Everytime INSERT to MySQL
+		sprintf(insert_q,
+                    "INSERT INTO Event (device_id, t0check, t0active, x_acc, y_acc, z_acc, sample_size, offset) VALUES('%d', '%f', '%f', '%f', '%f', '%f', '%ld', '%ld')",
+                      device_id, sm->t0check, *pt2, *px2, *py2, *pz2, sm->lSampleSize, sm->lOffset);
+		query(insert_q);
+
+        // To check isEarthQuake
 		preserve_xyz.push_back(*new PreserveXYZ(px2, py2, pz2, pt2, &(sm->t0check), &(sm->lSampleSize), &(sm->lOffset)));
 
-		if(preserve_xyz.size() > LTA_array_numbers)
-		{
+		if( preserve_xyz.size() > LTA_array_numbers ){
 			preserve_xyz.erase(preserve_xyz.begin());
 		}
 
-		if(isEarthQuake) {
-			// INSERT to MySQL
-			sprintf(insert_q,
-							"INSERT INTO Event (device_id, t0check, t0active, x_acc, y_acc, z_acc, sample_size, offset) VALUES('%d', '%f', '%f', '%f', '%f', '%f', '%ld', '%ld')", device_id, sm->t0check, *pt2, *px2, *py2, *pz2, sm->lSampleSize, sm->lOffset);
-			query(insert_q);
-			//printf("Rec Query = %s\n\n", insert_q);	//debug
-
+		if(isEarthQuake) { // While a recordTime, couldn't check isEarthQuake
 			if(isQuitRecording()) {
 				printf("Recording quits at %f\n", sm->t0check);
 				isEarthQuake = false;
 			}
+		} else { // Only check isEarthQuake
+            isEarthQuake = isStrikeEarthQuake();
 		}
-		else
-		{
-			if(past_preserve_xyz.size() == 0) {
-				isEarthQuake = isStrikeEarthQuake();
-			}
-			else {
-				PreserveXYZ past_tmp = *past_preserve_xyz.begin();
-				// INSERT to MySQL
-				sprintf(insert_q,
-								"INSERT INTO Event (device_id, t0check, t0active, x_acc, y_acc, z_acc, sample_size, offset) VALUES('%d', '%f', '%f', '%f', '%f', '%f', '%ld', '%ld')", device_id, past_tmp.tmp_id_t, past_tmp.tmp_t, past_tmp.tmp_x, past_tmp.tmp_y, past_tmp.tmp_z, past_tmp.sampleSize, past_tmp.offSet);
-				query(insert_q);
-				//printf("Query %s\n", insert_q);	//debug
-				past_preserve_xyz.erase(past_preserve_xyz.begin());
-			}
-		}
-
-		/*
-		fprintf(stdout, "At t0check=%f  t0active=%f :   x1=%f  y1=%f  z1=%f  sample_size=%ld  lOffset=%ld\n",
-		sm->t0check, *pt2, *px2, *py2, *pz2, sm->lSampleSize, sm->lOffset);
-		*/
 	}
 
 	// if active time is falling behind the checked (wall clock) time -- set equal, may have gone to sleep & woken up etc
@@ -330,28 +317,18 @@ bool CSensor::isStrikeEarthQuake()
 			//fprintf(stdout, "%f %f %f %f %f\n\n", LTA_z, STA_z, LTA_average, STA_average, (LTA_average - STA_average));
 		//}
 
-		if(fabs(LTA_average * limitTimes) < fabs(STA_average))
-		{
+		if( fabs(LTA_average * limitTimes) < fabs(STA_average) ) {
 			triggerCount++;
 
 			//fprintf(stdout, "%f %f %f %f %f %d\n\n", LTA_z, STA_z, LTA_average, STA_average, (LTA_average - STA_average), triggerCount);
-			if(triggerCount == triggerLimit)
-			{
+			if( triggerCount == triggerLimit ){
 				triggerCount = 0;
 				startRecordTime = preserve_xyz.back().tmp_id_t;
-				past_preserve_xyz = preserve_xyz;
 				printf("Recording starts at %f\n", startRecordTime);	//for logging
 				return true;
 			}
 			else return false;
-		}
-		else
-		{
-			//debug
-			//if((sm->lOffset % 25) == 0) {
-				//fprintf(stdout, "%f %f %f %f %f\n\n", LTA_z, STA_z, LTA_average, STA_average, (LTA_average - STA_average));
-			//}
-
+		} else {
 			triggerCount = 0;
 			return false;
 		}
@@ -359,30 +336,6 @@ bool CSensor::isStrikeEarthQuake()
 	else
 		return false;
 }
-
-/*
-int main(){
-
-  MYSQL_RES *res;
-  MYSQL_ROW row;
-
-  if (!connectDatabase()){
-    printf("error connect databasen");
-  };
-
-  query("INSERT INTO test VALUES('hoge','hoge')");
-
-  res = query("SELECT * FROM test;");
-
-  printf("%20s %20s n", "COLUMN_A", "COLUMN_B");
-  while( (row = fetchRow(res)) != NULL ){
-    printf("%10s %20s n", row[0], row[1]);
-  }
-
-  closeDatabase();
-
-}
-*/
 
 int CSensor::connectDatabase(){
   mysql = mysql_init(NULL);
@@ -430,3 +383,94 @@ void CSensor::freeResult(MYSQL_RES *res){
   mysql_free_result(res);
   g_res = NULL;
 }
+
+//---------------------------------------------------------------------------
+/*
+void CSensor::fourier ( double x[], complex<double> comp[], double dt, int n, int nn )
+{
+const complex<double> zero(0.,0.);
+int i, nyquist;
+double f,y,f1,f2,f3;
+	                              // FFTの準備
+    for ( i=0; i<n; i++ )
+        comp[i] = complex<double>( x[i], 0. ) ;
+    for ( i=n; i<nn; i++ )
+        comp[i] = zero ;
+                              // フーリエ変換で加速度のフーリエスペクトル
+    StatusBar1->SimpleText = "フーリエ変換" ;
+    StatusBar1->Refresh() ;
+    fast  ( comp, nn, -1 ) ;
+    for ( i=0; i<nn; i++ ) comp[i] /= (double)nn;
+                              // フィルターをかける
+    StatusBar1->SimpleText = "フィルター操作" ;
+    StatusBar1->Refresh() ;
+
+    nyquist=nn/2;
+    comp[0]=zero;
+
+    for ( i=1; i<=nyquist; i++ ) {
+        f=(double)i/(double)nn/dt;
+        y=f/10.;
+        f1=sqrt(1./f);
+        f2=1./sqrt(1.+0.694*y*y+0.241*pow(y,4)+0.0557*pow(y,6)
+                +0.009664*pow(y,8)+0.00134*pow(y,10)+0.000155*pow(y,12));
+        f3=sqrt(1.-exp(-(pow(f/0.5,3))));
+        comp[i]=f1*f2*f3*comp[i];
+    }
+    for ( i=nyquist+1; i<nn; i++ ) {
+        f=(double)(nn-i)/(double)nn/dt;
+        y=f/10.;
+        f1=sqrt(1./f);
+        f2=1./sqrt(1.+0.694*y*y+0.241*pow(y,4)+0.0557*pow(y,6)
+                +0.009664*pow(y,8)+0.00134*pow(y,10)+0.000155*pow(y,12));
+        f3=sqrt(1.-exp(-(pow(f/0.5,3))));
+        comp[i]=f1*f2*f3*comp[i];
+    }
+                              // フーリエ逆変換で時刻歴波形に戻す
+    StatusBar1->SimpleText = "フーリエ逆変換" ;
+    StatusBar1->Refresh() ;
+    fast ( comp, nn, +1 ) ;
+    for ( i=0; i<n; i++ ) {
+        x[i] = real( comp[i] ) ;
+    }
+}
+//---------------------------------------------------------------------------
+// 高速フーリエ変換
+//      参考文献：大崎順彦「新・地震動のスペクトル解析入門」鹿島出版会
+
+void CSensor::fast ( complex<double> x[], int nn, int ind )
+{
+complex<double> temp, theta;
+int i, j, k, m, kmax, istep, npower;
+static const double PI = 6*asin( 0.5 ) ;
+
+    npower = log( (double) nn + 1 ) / log( 2. ) ;
+    for ( i=1; i<nn-1; i++ ) {
+        m = 1 ;
+        j = 0 ;
+        for ( k=0; k<npower; k++ ) {
+            j += (( i & m ) >> k) << ( npower - k - 1 ) ;
+            m *= 2 ;
+        }
+        if ( i < j ) {
+            temp = x[j] ;
+            x[j] = x[i] ;
+            x[i] = temp ;
+        }
+    }
+    kmax = 1 ;
+    while ( kmax<nn ) {
+        istep = kmax * 2 ;
+        for ( k=0; k<kmax; k++ ) {
+            theta = complex<double>( 0., PI * ind * k / kmax ) ;
+            for ( i=k; i<nn; i=i+istep ) {
+                j = i + kmax ;
+                temp = x[j] * exp( theta ) ;
+                x[j] = x[i] - temp ;
+                x[i] = x[i] + temp ;
+            }
+        }
+        kmax = istep ;
+    }
+}
+*/
