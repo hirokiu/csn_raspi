@@ -25,6 +25,8 @@ using namespace std;
 //const int device_id;
 const int device_id = 28;
 
+const bool isAllTimeRecord = true;
+
 // local MySQL
 const char *hostname = "localhost";
 const char *username = "root";
@@ -246,10 +248,12 @@ inline bool CSensor::mean_xyz(const bool bVerbose)
 
 	if (bVerbose) {
 		// Everytime INSERT to MySQL
-		sprintf(insert_q,
-                    "INSERT INTO Event (device_id, t0check, t0active, x_acc, y_acc, z_acc, sample_size, offset) VALUES('%d', '%f', '%f', '%f', '%f', '%f', '%ld', '%ld')",
-                      device_id, sm->t0check, *pt2, *px2, *py2, *pz2, sm->lSampleSize, sm->lOffset);
-		query(insert_q);
+        if(isAllTimeRecord){
+    		sprintf(insert_q,
+                        "INSERT INTO Event (device_id, t0check, t0active, x_acc, y_acc, z_acc, sample_size, offset) VALUES('%d', '%f', '%f', '%f', '%f', '%f', '%ld', '%ld')",
+                          device_id, sm->t0check, *pt2, *px2, *py2, *pz2, sm->lSampleSize, sm->lOffset);
+    		query(insert_q);
+        }
 
         // To check isEarthQuake
 		preserve_xyz.push_back(*new PreserveXYZ(px2, py2, pz2, pt2, &(sm->t0check), &(sm->lSampleSize), &(sm->lOffset)));
@@ -262,7 +266,12 @@ inline bool CSensor::mean_xyz(const bool bVerbose)
 			if(isQuitRecording()) {
 				//printf("Recording quits at %f\n", sm->t0check);
 				isEarthQuake = false;
-			}
+			}else if( !(isAllTimeRecord) ){
+        		sprintf(insert_q,
+                            "INSERT INTO Event (device_id, t0check, t0active, x_acc, y_acc, z_acc, sample_size, offset) VALUES('%d', '%f', '%f', '%f', '%f', '%f', '%ld', '%ld')",
+                              device_id, sm->t0check, *pt2, *px2, *py2, *pz2, sm->lSampleSize, sm->lOffset);
+        		query(insert_q);
+            }
 		} else { // Only check isEarthQuake
             isEarthQuake = isStrikeEarthQuake();
 		}
