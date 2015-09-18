@@ -25,7 +25,7 @@ using namespace std;
 //const int device_id;
 const int device_id = 28;
 
-const bool isAllTimeRecord = true;
+const bool isAllTimeRecord = false;
 
 // local MySQL
 const char *hostname = "localhost";
@@ -310,24 +310,32 @@ bool CSensor::isStrikeEarthQuake()
 {
 	float LTA_z = 0.0f, STA_z = 0.0f;
 	double LTA_average = 0.0f, STA_average = 0.0f;
+    double LTA_diff_offset = 0.0f, LTA_offset = 0.0f;
 
 	if(preserve_xyz.size() == LTA_array_numbers)
 	{
 		for(int i = preserve_xyz.size()-1; i >= 0; i--)
 		{
-			LTA_z += fabs(preserve_xyz[i].tmp_z - z_offset);
+			LTA_z += fabs(preserve_xyz[i].tmp_z);
+			//LTA_z += fabs(preserve_xyz[i].tmp_z - z_offset);
 
-			if(i == LTA_STA_diff)
-				STA_z = LTA_z;
+			if(i == LTA_STA_diff) STA_z = LTA_z;
+
 		}
 
-		LTA_average = LTA_z / (double)LTA_array_numbers;
-		STA_average = STA_z / (double)STA_array_numbers;
+		LTA_diff_offset = (LTA_z - STA_z) / (double)LTA_STA_diff;
+		LTA_offset = ( LTA_z / (double)LTA_array_numbers );
+		LTA_average = ( LTA_z / (double)LTA_array_numbers ) - LTA_diff_offset;
+		STA_average = ( STA_z / (double)STA_array_numbers ) - LTA_offset;
+		//LTA_average = ( LTA_z / (double)LTA_array_numbers );
+		//STA_average = ( STA_z / (double)STA_array_numbers );
 
 		//debug
 		//if(fabs(LTA_average - STA_average) > 0.002) {
-			//fprintf(stdout, "%f %f %f %f %f\n\n", LTA_z, STA_z, LTA_average, STA_average, (LTA_average - STA_average));
+			//fprintf(stdout, "offset:%f / %f %f %f %f %f / trigger? %f \n\n", LTA_diff_offset, LTA_z, STA_z, LTA_average, STA_average, (LTA_average - STA_average), (fabs(STA_average)/fabs(LTA_average)) );
 		//}
+
+        if( (LTA_average == 0.0f) || (STA_average == 0.0f) ) return false;
 
 		if( fabs(LTA_average * limitTimes) < fabs(STA_average) ) {
 			triggerCount++;
@@ -339,7 +347,7 @@ bool CSensor::isStrikeEarthQuake()
 				//printf("Recording starts at %f\n", startRecordTime);	//for logging
 
                 // Trigger event execute.
-                sprintf(system_cmd, "nohup /home/pi/csn_raspi/tools/propagation.sh %d %f &", device_id, startRecordTime);
+                sprintf(system_cmd, "nohup /home/pi/csn_raspi/tools/propagation.sh %d %f %f&", device_id, startRecordTime, (fabs(STA_average)/fabs(LTA_average)) );
                 //printf("cmd - %s\n",system_cmd);
                 system(system_cmd);
 
