@@ -23,7 +23,12 @@ using namespace std;
 // device ID
 // TODO:set from argv
 //const int device_id;
-const int device_id = 28;
+const int device_id = 100;
+
+const bool isAllTimeRecord = true;
+
+// Program path
+const char *dir_name = "/home/pi/csn_raspi";
 
 // local MySQL
 const char *hostname = "localhost";
@@ -57,10 +62,6 @@ const float STA_second = 3.0f;
 int LTA_array_numbers = (int)(LTA_second / DT); //DT is defined in define.h
 int STA_array_numbers = (int)(STA_second / DT); //DT is defined in define.h
 int LTA_STA_diff = LTA_array_numbers - STA_array_numbers;
-
-double x_offset = 0.0f;
-double y_offset = 0.0f;
-double z_offset = -9.8f;    //Must be minus value
 
 const float limitTimes = 3.0f;
 
@@ -246,10 +247,12 @@ inline bool CSensor::mean_xyz(const bool bVerbose)
 
 	if (bVerbose) {
 		// Everytime INSERT to MySQL
-		sprintf(insert_q,
-                    "INSERT INTO Event (device_id, t0check, t0active, x_acc, y_acc, z_acc, sample_size, offset) VALUES('%d', '%f', '%f', '%f', '%f', '%f', '%ld', '%ld')",
-                      device_id, sm->t0check, *pt2, *px2, *py2, *pz2, sm->lSampleSize, sm->lOffset);
-		query(insert_q);
+        if(isAllTimeRecord){
+    		sprintf(insert_q,
+                        "INSERT INTO Event (device_id, t0check, t0active, x_acc, y_acc, z_acc, sample_size, offset) VALUES('%d', '%f', '%f', '%f', '%f', '%f', '%ld', '%ld')",
+                          device_id, sm->t0check, *pt2, *px2, *py2, *pz2, sm->lSampleSize, sm->lOffset);
+    		query(insert_q);
+        }
 
         // To check isEarthQuake
 		preserve_xyz.push_back(*new PreserveXYZ(px2, py2, pz2, pt2, &(sm->t0check), &(sm->lSampleSize), &(sm->lOffset)));
@@ -262,7 +265,12 @@ inline bool CSensor::mean_xyz(const bool bVerbose)
 			if(isQuitRecording()) {
 				//printf("Recording quits at %f\n", sm->t0check);
 				isEarthQuake = false;
-			}
+			}else if( !(isAllTimeRecord) ){
+        		sprintf(insert_q,
+                            "INSERT INTO Event (device_id, t0check, t0active, x_acc, y_acc, z_acc, sample_size, offset) VALUES('%d', '%f', '%f', '%f', '%f', '%f', '%ld', '%ld')",
+                              device_id, sm->t0check, *pt2, *px2, *py2, *pz2, sm->lSampleSize, sm->lOffset);
+        		query(insert_q);
+            }
 		} else { // Only check isEarthQuake
             isEarthQuake = isStrikeEarthQuake();
 		}
@@ -301,15 +309,21 @@ bool CSensor::isStrikeEarthQuake()
 {
 	float LTA_z = 0.0f, STA_z = 0.0f;
 	double LTA_average = 0.0f, STA_average = 0.0f;
+    double LTA_z_offset = 0.0f;
 
 	if(preserve_xyz.size() == LTA_array_numbers)
 	{
+		for(int i = preserve_xyz.size()-1; i >= 0; i--){
+			LTA_z += preserve_xyz[i].tmp_z; // origin
+        }
+		LTA_z_offset = LTA_z / (double)LTA_array_numbers;
+
+        LTA_z = 0.0f;
 		for(int i = preserve_xyz.size()-1; i >= 0; i--)
 		{
-			LTA_z += fabs(preserve_xyz[i].tmp_z - z_offset);
+			LTA_z += fabs(preserve_xyz[i].tmp_z - LTA_z_offset);
 
-			if(i == LTA_STA_diff)
-				STA_z = LTA_z;
+			if(i == LTA_STA_diff) STA_z = LTA_z;
 		}
 
 		LTA_average = LTA_z / (double)LTA_array_numbers;
@@ -319,6 +333,8 @@ bool CSensor::isStrikeEarthQuake()
 		//if(fabs(LTA_average - STA_average) > 0.002) {
 			//fprintf(stdout, "%f %f %f %f %f\n\n", LTA_z, STA_z, LTA_average, STA_average, (LTA_average - STA_average));
 		//}
+
+        if( (LTA_average == 0.0f) || (STA_average == 0.0f) ) return false;
 
 		if( fabs(LTA_average * limitTimes) < fabs(STA_average) ) {
 			triggerCount++;
@@ -330,7 +346,7 @@ bool CSensor::isStrikeEarthQuake()
 				//printf("Recording starts at %f\n", startRecordTime);	//for logging
 
                 // Trigger event execute.
-                sprintf(system_cmd, "nohup /home/pi/csn_raspi/tools/propagation.sh %d %f &", device_id, startRecordTime);
+                sprintf(system_cmd, "nohup %s/tools/propagation.sh %d %f %f &", dir_name, device_id, startRecordTime, (fabs(STA_average)/fabs(LTA_average)) );
                 //printf("cmd - %s\n",system_cmd);
                 system(system_cmd);
 
@@ -392,94 +408,3 @@ void CSensor::freeResult(MYSQL_RES *res){
   mysql_free_result(res);
   g_res = NULL;
 }
-
-//---------------------------------------------------------------------------
-/*
-void CSensor::fourier ( double x[], complex<double> comp[], double dt, int n, int nn )
-{
-const complex<double> zero(0.,0.);
-int i, nyquist;
-double f,y,f1,f2,f3;
-	                              // FFTの準備
-    for ( i=0; i<n; i++ )
-        comp[i] = complex<double>( x[i], 0. ) ;
-    for ( i=n; i<nn; i++ )
-        comp[i] = zero ;
-                              // フーリエ変換で加速度のフーリエスペクトル
-    StatusBar1->SimpleText = "フーリエ変換" ;
-    StatusBar1->Refresh() ;
-    fast  ( comp, nn, -1 ) ;
-    for ( i=0; i<nn; i++ ) comp[i] /= (double)nn;
-                              // フィルターをかける
-    StatusBar1->SimpleText = "フィルター操作" ;
-    StatusBar1->Refresh() ;
-
-    nyquist=nn/2;
-    comp[0]=zero;
-
-    for ( i=1; i<=nyquist; i++ ) {
-        f=(double)i/(double)nn/dt;
-        y=f/10.;
-        f1=sqrt(1./f);
-        f2=1./sqrt(1.+0.694*y*y+0.241*pow(y,4)+0.0557*pow(y,6)
-                +0.009664*pow(y,8)+0.00134*pow(y,10)+0.000155*pow(y,12));
-        f3=sqrt(1.-exp(-(pow(f/0.5,3))));
-        comp[i]=f1*f2*f3*comp[i];
-    }
-    for ( i=nyquist+1; i<nn; i++ ) {
-        f=(double)(nn-i)/(double)nn/dt;
-        y=f/10.;
-        f1=sqrt(1./f);
-        f2=1./sqrt(1.+0.694*y*y+0.241*pow(y,4)+0.0557*pow(y,6)
-                +0.009664*pow(y,8)+0.00134*pow(y,10)+0.000155*pow(y,12));
-        f3=sqrt(1.-exp(-(pow(f/0.5,3))));
-        comp[i]=f1*f2*f3*comp[i];
-    }
-                              // フーリエ逆変換で時刻歴波形に戻す
-    StatusBar1->SimpleText = "フーリエ逆変換" ;
-    StatusBar1->Refresh() ;
-    fast ( comp, nn, +1 ) ;
-    for ( i=0; i<n; i++ ) {
-        x[i] = real( comp[i] ) ;
-    }
-}
-//---------------------------------------------------------------------------
-// 高速フーリエ変換
-//      参考文献：大崎順彦「新・地震動のスペクトル解析入門」鹿島出版会
-
-void CSensor::fast ( complex<double> x[], int nn, int ind )
-{
-complex<double> temp, theta;
-int i, j, k, m, kmax, istep, npower;
-static const double PI = 6*asin( 0.5 ) ;
-
-    npower = log( (double) nn + 1 ) / log( 2. ) ;
-    for ( i=1; i<nn-1; i++ ) {
-        m = 1 ;
-        j = 0 ;
-        for ( k=0; k<npower; k++ ) {
-            j += (( i & m ) >> k) << ( npower - k - 1 ) ;
-            m *= 2 ;
-        }
-        if ( i < j ) {
-            temp = x[j] ;
-            x[j] = x[i] ;
-            x[i] = temp ;
-        }
-    }
-    kmax = 1 ;
-    while ( kmax<nn ) {
-        istep = kmax * 2 ;
-        for ( k=0; k<kmax; k++ ) {
-            theta = complex<double>( 0., PI * ind * k / kmax ) ;
-            for ( i=k; i<nn; i=i+istep ) {
-                j = i + kmax ;
-                temp = x[j] * exp( theta ) ;
-                x[j] = x[i] - temp ;
-                x[i] = x[i] + temp ;
-            }
-        }
-        kmax = istep ;
-    }
-}
-*/
