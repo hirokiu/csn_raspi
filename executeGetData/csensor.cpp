@@ -18,6 +18,9 @@
 #include "mysql.h"
 #include <pthread.h>
 
+#include <fstream>
+
+
 using namespace std;
 
 // device ID
@@ -28,7 +31,9 @@ const int device_id = 100;
 const bool isAllTimeRecord = true;
 
 // Program path
-const char *dir_name = "/home/pi/csn_raspi";
+const char *base_dir = "/home/pi/csn_raspi";
+const char *data_dir = "/earthquakes";
+const char *file_extension = ".inp";
 
 // local MySQL
 const char *hostname = "localhost";
@@ -262,7 +267,13 @@ inline bool CSensor::mean_xyz(const bool bVerbose)
 		}
 
 		if(isEarthQuake) { // While a recordTime, couldn't check isEarthQuake
+            // set triggered data
+		    triggered_xyz.push_back(*new PreserveXYZ(px2, py2, pz2, pt2, &(sm->t0check), &(sm->lSampleSize), &(sm->lOffset)));
+
 			if(isQuitRecording()) {
+                // output triggered data to file
+                outputEarthQuake();
+
 				//printf("Recording quits at %f\n", sm->t0check);
 				isEarthQuake = false;
 			}else if( !(isAllTimeRecord) ){
@@ -345,8 +356,12 @@ bool CSensor::isStrikeEarthQuake()
 				startRecordTime = preserve_xyz.back().tmp_id_t;
 				//printf("Recording starts at %f\n", startRecordTime);	//for logging
 
+                // make treggerd data
+                triggered_xyz.erase(triggered_xyz.begin());
+                triggered_xyz = preserve_xyz;
+
                 // Trigger event execute.
-                sprintf(system_cmd, "nohup %s/tools/propagation.sh %d %f %f &", dir_name, device_id, startRecordTime, (fabs(STA_average)/fabs(LTA_average)) );
+                sprintf(system_cmd, "nohup %s/tools/propagation.sh %d %f %f &", base_dir, device_id, startRecordTime, (fabs(STA_average)/fabs(LTA_average)) );
                 //printf("cmd - %s\n",system_cmd);
                 system(system_cmd);
 
@@ -360,6 +375,27 @@ bool CSensor::isStrikeEarthQuake()
 	}
 	else
 		return false;
+}
+
+bool CSensor::outputEarthQuake(){
+
+    char filename[128];
+    sprintf(filename, "%s%s/%f%s", base_dir, data_dir, startRecordTime, file_extension);
+
+	std::ofstream ofs( filename );
+    if (!ofs.is_open()) {
+        return false;
+    }
+
+    for(int i = 0; i < triggered_xyz.size(); i++){
+        ofs << triggered_xyz[i].tmp_t << "," <<
+                triggered_xyz[i].tmp_x << "," <<
+                triggered_xyz[i].tmp_y << "," <<
+                triggered_xyz[i].tmp_z << std::endl;
+    }
+    ofs.close();
+
+    return true;
 }
 
 int CSensor::connectDatabase(){
