@@ -3,6 +3,7 @@
 BASE_DIR=/home/pi/csn_raspi
 TARGET_DIR=${BASE_DIR}/active
 
+TODAY=`date +'%Y%m%d'`
 LASTTIME=`date +'%s'`
 
 # process check
@@ -13,9 +14,9 @@ if [ ${IS_RUN} = 0 ]; then
 fi
 
 START=${TARGET_DIR}/start.txt
-ALIVE=${TARGET_DIR}/alive.txt
+ALIVE=${TARGET_DIR}/alive_${TODAY}.txt
 if [ -e ${START} ]; then
-    echo ${LASTTIME} > ${ALIVE}
+    echo ${LASTTIME} >> ${ALIVE}
 else
     touch ${START}
     touch ${ALIVE}
