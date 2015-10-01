@@ -46,6 +46,7 @@ class CSensor
 		};
 		vector<PreserveXYZ> preserve_xyz;
 		vector<PreserveXYZ> past_preserve_xyz;
+		vector<PreserveXYZ> triggered_xyz;
 
 		// private function
 		virtual bool read_xyz(float& x1, float& y1, float& z1) = 0;   // read raw sensor data, pure virtual function subclass implemented
@@ -53,6 +54,7 @@ class CSensor
 		//akisue
 		virtual bool isStrikeEarthQuake();
 		virtual bool isQuitRecording();
+		virtual bool outputEarthQuake();
 
 	public:
 		CSensor();
