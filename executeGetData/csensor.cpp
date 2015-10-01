@@ -19,7 +19,8 @@
 #include <pthread.h>
 
 #include <fstream>
-
+#include <iostream>
+#include <iomanip>
 
 using namespace std;
 
@@ -342,7 +343,7 @@ bool CSensor::isStrikeEarthQuake()
 
 		//debug
 		//if(fabs(LTA_average - STA_average) > 0.002) {
-			//fprintf(stdout, "%f %f %f %f %f\n\n", LTA_z, STA_z, LTA_average, STA_average, (LTA_average - STA_average));
+			//fprintf(stdout, "%f %f %f %f %f\n\n", LTA_z, STA_z, LTA_average, STA_average, (LTA_average / STA_average));
 		//}
 
         if( (LTA_average == 0.0f) || (STA_average == 0.0f) ) return false;
@@ -387,8 +388,10 @@ bool CSensor::outputEarthQuake(){
         return false;
     }
 
+    cout.setf(ios_base::fixed,ios_base::floatfield);
     for(int i = 0; i < triggered_xyz.size(); i++){
-        ofs << triggered_xyz[i].tmp_t << "," <<
+        ofs << setprecision(15) <<
+		triggered_xyz[i].tmp_t << "," <<
                 triggered_xyz[i].tmp_x << "," <<
                 triggered_xyz[i].tmp_y << "," <<
                 triggered_xyz[i].tmp_z << std::endl;
