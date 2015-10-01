@@ -381,7 +381,7 @@ bool CSensor::isStrikeEarthQuake()
 bool CSensor::outputEarthQuake(){
 
     char filename[128];
-    sprintf(filename, "%s%s/%f%s", base_dir, data_dir, startRecordTime, file_extension);
+    sprintf(filename, "%s%s/%d_%f%s", base_dir, data_dir, device_id, startRecordTime, file_extension);
 
 	std::ofstream ofs( filename );
     if (!ofs.is_open()) {
@@ -390,7 +390,7 @@ bool CSensor::outputEarthQuake(){
 
     cout.setf(ios_base::fixed,ios_base::floatfield);
     for(int i = 0; i < triggered_xyz.size(); i++){
-        ofs << setprecision(15) <<
+        ofs << setprecision(20) <<
 		triggered_xyz[i].tmp_t << "," <<
                 triggered_xyz[i].tmp_x << "," <<
                 triggered_xyz[i].tmp_y << "," <<
