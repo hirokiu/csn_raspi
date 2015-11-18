@@ -15,8 +15,8 @@ TABLE=Event
 DUMP_FILE=${TARGET_DIR}/data_${LASTDATE}.sql
 
 # every hour
-mysqldump -u root ${DB_NAME} ${TABLE} --where="TRUE ORDER BY id t0active LIMIT ${LIMIT}" > ${DUMP_FILE}
+mysqldump -u root ${DB_NAME} ${TABLE} --where="TRUE ORDER BY t0active LIMIT ${LIMIT}" > ${DUMP_FILE}
 bzip2 ${DUMP_FILE}
 
 # delete
-mysql -u root ${DB_NAME} -e "DELETE FROM Event ORDER BY id t0active LIMIT ${LIMIT}"
+mysql -u root ${DB_NAME} -e "DELETE FROM Event ORDER BY t0active LIMIT ${LIMIT}"
