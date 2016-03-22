@@ -38,6 +38,8 @@ int main(int argc, char** argv)
        fprintf(stdout, "%f seconds of samples read from %f to %f in %f seconds real time -- error of %3.3f %c\n"
                "%d Timing Errors Encountered\n",
 	  RUN_SECONDS, tstart, tend, tend - tstart, ((RUN_SECONDS - (tend - tstart)) / RUN_SECONDS) * 100.0f, '%', iErrCnt);
+
+      sms.disconnectDatabase();
     }
     else {
        fprintf(stdout, "No sensor detected!\n");
@@ -73,4 +75,3 @@ double dtime() {
     return tv.tv_sec + (tv.tv_usec/1.e6);
 #endif
 }
-

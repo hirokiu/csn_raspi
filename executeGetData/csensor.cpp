@@ -32,6 +32,7 @@ const int device_id = 100;
 const bool isAllTimeRecord = true;
 
 // Program path
+// TODO:define.hに移動
 const char *base_dir = "/home/pi/csn_raspi";
 const char *data_dir = "/earthquakes";
 const char *file_extension = ".inp";
@@ -281,7 +282,7 @@ inline bool CSensor::mean_xyz(const bool bVerbose)
         		sprintf(insert_q,
                             "INSERT INTO Event (device_id, t0check, t0active, x_acc, y_acc, z_acc, sample_size, offset) VALUES('%d', '%f', '%f', '%f', '%f', '%f', '%ld', '%ld')",
                               device_id, sm->t0check, *pt2, *px2, *py2, *pz2, sm->lSampleSize, sm->lOffset);
-        		query(insert_q);
+                              query(insert_q);
             }
 		} else { // Only check isEarthQuake
             isEarthQuake = isStrikeEarthQuake();
@@ -306,6 +307,9 @@ inline bool CSensor::mean_xyz(const bool bVerbose)
 			return false;   // if we're not debugging, this is a serious run-time problem, so reset time & counters & try again
 		#endif
 	}
+
+    free(insert_q);
+    delete [] PreserveXYZ;
 
 	return true;
 }
@@ -398,6 +402,8 @@ bool CSensor::outputEarthQuake(){
     }
     ofs.close();
 
+    free(filename);
+
     return true;
 }
 
@@ -416,7 +422,7 @@ int CSensor::connectDatabase(){
 }
   return 1;
 }
-void CSensor::closeDatabase(){
+void CSensor::disconnectDatabase(){
   if(g_res){
     //freeResult(g_res);
     g_res = NULL;

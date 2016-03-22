@@ -73,7 +73,7 @@ class CSensor
 
 		// MySQL functions
 		int connectDatabase();
-		void closeDatabase();
+		void disconnectDatabase();
 		void freeResult(MYSQL_RES * );
 		MYSQL_RES *query(char *);
 		MYSQL_ROW fetchRow(MYSQL_RES *);
