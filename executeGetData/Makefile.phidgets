@@ -32,7 +32,7 @@ LDFLAGS  =
 INCLUDES_PHIDGETS = -I/usr/include/
 LIBS_PHIDGETS = -lphidget21
 INCLUDES = -I/usr/include/mysql/
-LIBS = -L/usr/lib64/mysql/ -lmysqlclient
+LIBS = -L/usr/lib64/mysql/ -lmysqlclient -ldl
 
 RM            = rm -f
 OBJEXT        = o

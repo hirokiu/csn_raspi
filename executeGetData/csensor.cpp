@@ -308,8 +308,8 @@ inline bool CSensor::mean_xyz(const bool bVerbose)
 		#endif
 	}
 
-    free(insert_q);
-    delete [] PreserveXYZ;
+    //free(insert_q);
+    //delete [] PreserveXYZ;
 
 	return true;
 }
@@ -402,7 +402,7 @@ bool CSensor::outputEarthQuake(){
     }
     ofs.close();
 
-    free(filename);
+    //free(filename);
 
     return true;
 }

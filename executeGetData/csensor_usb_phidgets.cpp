@@ -125,7 +125,6 @@ bool CSensorUSBPhidgets::setupFunctionPointers()
 */
 
 
-/*
 #ifdef __USE_DYLIB__
 	if (!m_handleLibrary) return false;
 	m_PtrCPhidget_open = (PtrCPhidget_open) GET_PROC_ADDR(m_handleLibrary, "CPhidget_open");
@@ -178,7 +177,6 @@ bool CSensorUSBPhidgets::setupFunctionPointers()
 	m_PtrCPhidget_getDeviceID = (PtrCPhidget_getDeviceID) GET_PROC_ADDR(m_handleLibrary,
 		   "CPhidget_getDeviceID");
 
-*/
 
 /*
 	m_PtrCPhidgetManager_getAttachedDevices = (PtrCPhidgetManager_getAttachedDevices) GET_PROC_ADDR(m_handleLibrary,
@@ -197,13 +195,12 @@ bool CSensorUSBPhidgets::setupFunctionPointers()
 		   "CPhidgetManager_free");
 */
 
-/* // __USE_DYLIB__
+// __USE_DYLIB__
         m_PtrCPhidget_enableLogging = (PtrCPhidget_enableLogging) GET_PROC_ADDR(m_handleLibrary, "CPhidget_enableLogging");
         m_PtrCPhidget_disableLogging = (PtrCPhidget_disableLogging) GET_PROC_ADDR(m_handleLibrary, "CPhidget_disableLogging");
         m_PtrCPhidget_log = (PtrCPhidget_log) GET_PROC_ADDR(m_handleLibrary, "CPhidget_log");
-*/
 
-//#else   // static lib - just get pointers to the function entry points
+#else   // static lib - just get pointers to the function entry points
         m_PtrCPhidget_open = (PtrCPhidget_open) CPhidget_open;
         m_PtrCPhidget_close = (PtrCPhidget_close) CPhidget_close;
         m_PtrCPhidget_delete = (PtrCPhidget_delete) CPhidget_delete;
@@ -258,7 +255,7 @@ bool CSensorUSBPhidgets::setupFunctionPointers()
         m_PtrCPhidget_disableLogging = (PtrCPhidget_disableLogging) CPhidget_disableLogging;
         m_PtrCPhidget_log = (PtrCPhidget_log) CPhidget_log;
 
-//#endif
+#endif
 
 	// test that some choice functions aren't null
 	return (bool) (m_PtrCPhidget_open && m_PtrCPhidget_close && m_PtrCPhidget_waitForAttachment && m_PtrCPhidget_set_OnAttach_Handler 
@@ -270,8 +267,8 @@ bool CSensorUSBPhidgets::setupFunctionPointers()
 void CSensorUSBPhidgets::closePort()
 {
 	if (m_handlePhidgetSpatial) {
-		m_PtrCPhidget_close((CPhidgetHandle) m_handlePhidgetSpatial);
-		m_PtrCPhidget_delete((CPhidgetHandle) m_handlePhidgetSpatial);
+		CPhidget_close((CPhidgetHandle) m_handlePhidgetSpatial);
+		CPhidget_delete((CPhidgetHandle) m_handlePhidgetSpatial);
 		m_handlePhidgetSpatial = NULL;
 	}
 
@@ -351,31 +348,21 @@ bool CSensorUSBPhidgets::detect()
    setType();
    setPort();
 
-   //if (qcn_main::g_iStop) return false;
-
-	// check for stop signal and function pointers
-	//if (qcn_main::g_iStop || ! setupFunctionPointers()) return false;
-
 // log Linux
-///*
+/*
 #if !defined(__APPLE_CC__) && !defined(_WIN32)	
        if (!m_bLogging) {
           m_PtrCPhidget_enableLogging(PHIDGET_LOG_VERBOSE, "phidget.txt");
           m_bLogging = true;
        }
 #endif
-//*/
+*/
+
 	//Declare a spatial handle
-	m_handlePhidgetSpatial = NULL;
+	m_handlePhidgetSpatial = 0;
 	
-#ifdef _DEBUG
-		fprintf(stderr, "create the spatial object. \n");
-#endif
 	//create the spatial object
-	m_PtrCPhidgetSpatial_create(&m_handlePhidgetSpatial);
-#ifdef _DEBUG
-		fprintf(stderr, "create the spatial object end. \n");
-#endif
+	CPhidgetSpatial_create(&m_handlePhidgetSpatial);
 	if (!m_handlePhidgetSpatial) return false; // can't create spatial handle
 	
 	//Set the handlers to be run when the device is plugged in or opened from software, unplugged or closed from software, or generates an error.
@@ -389,9 +376,12 @@ bool CSensorUSBPhidgets::detect()
 	//CPhidgetSpatial_set_OnSpatialData_Handler(m_handlePhidgetSpatial, SpatialDataHandler, NULL);
 	
 	//open the spatial object for device connections
-	if ((ret = m_PtrCPhidget_open((CPhidgetHandle) m_handlePhidgetSpatial, -1))) {
+#ifdef _DEBUG
+		fprintf(stderr, "open the spatial object for device connections. \n");
+#endif
+	if ((ret = CPhidget_open((CPhidgetHandle) m_handlePhidgetSpatial, -1))) {
 	        const char *err;
-		m_PtrCPhidget_getErrorDescription(ret, &err);
+		CPhidget_getErrorDescription(ret, &err);
 		fprintf(stderr, "Phidgets error open handle %d = %s\n", ret, err);
 		closePort();
 		return false;
@@ -400,14 +390,14 @@ bool CSensorUSBPhidgets::detect()
 	// try a second to open
 	double dTime = dtime();
 
-    if((ret = m_PtrCPhidget_waitForAttachment((CPhidgetHandle)m_handlePhidgetSpatial, 2000))) {
+    if((ret = CPhidget_waitForAttachment((CPhidgetHandle)m_handlePhidgetSpatial, 2000))) {
 	        const char *err;
-		m_PtrCPhidget_getErrorDescription(ret, &err);
-//#if !defined(_WIN32) && !defined(__APPLE_CC__)
+		CPhidget_getErrorDescription(ret, &err);
+#if !defined(_WIN32) && !defined(__APPLE_CC__)
 #ifdef _DEBUG
 		fprintf(stderr, "Phidgets error waitForAttachment %d = %s\n", ret, err);
 #endif
-//#endif
+#endif
 		closePort();
 		return false;
 	}
@@ -421,17 +411,17 @@ bool CSensorUSBPhidgets::detect()
 	//We will be displaying the name, serial number, version of the attached device, the number of accelerometer, gyro, and compass Axes, and the current data rate
 	// of the attached Spatial.
 
-	m_PtrCPhidget_getSerialNumber((CPhidgetHandle) m_handlePhidgetSpatial, &m_iSerialNum);
-	m_PtrCPhidget_getDeviceVersion((CPhidgetHandle) m_handlePhidgetSpatial, &m_iVersion);
-	m_PtrCPhidgetSpatial_getAccelerationAxisCount(m_handlePhidgetSpatial, &m_iNumAccelAxes);
-	m_PtrCPhidgetSpatial_getGyroAxisCount(m_handlePhidgetSpatial, &m_iNumGyroAxes);
-	m_PtrCPhidgetSpatial_getCompassAxisCount(m_handlePhidgetSpatial, &m_iNumCompassAxes);
-	m_PtrCPhidgetSpatial_getDataRateMax(m_handlePhidgetSpatial, &m_iDataRateMax);
-	m_PtrCPhidgetSpatial_getDataRateMin(m_handlePhidgetSpatial, &m_iDataRateMin);
-	m_PtrCPhidget_getDeviceName((CPhidgetHandle) m_handlePhidgetSpatial, &m_cstrDeviceName);
-	m_PtrCPhidget_getDeviceType((CPhidgetHandle) m_handlePhidgetSpatial, &m_cstrDeviceType); 
-	m_PtrCPhidget_getDeviceLabel((CPhidgetHandle) m_handlePhidgetSpatial, &m_cstrDeviceLabel); 
-	m_PtrCPhidget_getDeviceID((CPhidgetHandle) m_handlePhidgetSpatial, &m_enumPhidgetDeviceID);
+	CPhidget_getSerialNumber((CPhidgetHandle) m_handlePhidgetSpatial, &m_iSerialNum);
+	CPhidget_getDeviceVersion((CPhidgetHandle) m_handlePhidgetSpatial, &m_iVersion);
+	CPhidgetSpatial_getAccelerationAxisCount(m_handlePhidgetSpatial, &m_iNumAccelAxes);
+	CPhidgetSpatial_getGyroAxisCount(m_handlePhidgetSpatial, &m_iNumGyroAxes);
+	CPhidgetSpatial_getCompassAxisCount(m_handlePhidgetSpatial, &m_iNumCompassAxes);
+	CPhidgetSpatial_getDataRateMax(m_handlePhidgetSpatial, &m_iDataRateMax);
+	CPhidgetSpatial_getDataRateMin(m_handlePhidgetSpatial, &m_iDataRateMin);
+	CPhidget_getDeviceName((CPhidgetHandle) m_handlePhidgetSpatial, &m_cstrDeviceName);
+	CPhidget_getDeviceType((CPhidgetHandle) m_handlePhidgetSpatial, &m_cstrDeviceType); 
+	CPhidget_getDeviceLabel((CPhidgetHandle) m_handlePhidgetSpatial, &m_cstrDeviceLabel); 
+	CPhidget_getDeviceID((CPhidgetHandle) m_handlePhidgetSpatial, &m_enumPhidgetDeviceID);
 
 	if (m_iNumAccelAxes < 1) { // error as we should have 1 - 3 axes
 		fprintf(stderr, "Error - Phidgets Accel with %d axes\n", m_iNumAccelAxes);
@@ -492,15 +482,17 @@ bool CSensorUSBPhidgets::detect()
    }
 
    // last setup a detach callback function if device is removed
-   m_PtrCPhidget_set_OnAttach_Handler((CPhidgetHandle) m_handlePhidgetSpatial, PhidgetsAttachHandler, NULL);
-   m_PtrCPhidget_set_OnDetach_Handler((CPhidgetHandle) m_handlePhidgetSpatial, PhidgetsDetachHandler, NULL);
+   CPhidget_set_OnAttach_Handler((CPhidgetHandle) m_handlePhidgetSpatial, PhidgetsAttachHandler, NULL);
+   CPhidget_set_OnDetach_Handler((CPhidgetHandle) m_handlePhidgetSpatial, PhidgetsDetachHandler, NULL);
 	
+/*
 #if !defined(__APPLE_CC__) && !defined(_WIN32)	
        if (m_bLogging) {
            m_PtrCPhidget_disableLogging();
            m_bLogging = false;
        }
 #endif
+*/
 
    return true;
 }
@@ -510,9 +502,9 @@ inline bool CSensorUSBPhidgets::read_xyz(float& x1, float& y1, float& z1)
 	//if (qcn_main::g_iStop || !m_handlePhidgetSpatial) return false; // invalid handle
 	// NB: acceleration is in G's already so just multiply by Earth g 9.8
 	double x = 0., y = 0., z = 0.;
-	m_PtrCPhidgetSpatial_getAcceleration(m_handlePhidgetSpatial, 0, &x);
-	m_PtrCPhidgetSpatial_getAcceleration(m_handlePhidgetSpatial, 1, &y);
-	m_PtrCPhidgetSpatial_getAcceleration(m_handlePhidgetSpatial, 2, &z);
+	CPhidgetSpatial_getAcceleration(m_handlePhidgetSpatial, 0, &x);
+	CPhidgetSpatial_getAcceleration(m_handlePhidgetSpatial, 1, &y);
+	CPhidgetSpatial_getAcceleration(m_handlePhidgetSpatial, 2, &z);
 	x1 = (float) (x * EARTH_G);
 	y1 = (float) (y * EARTH_G);
 	z1 = (float) (z * -EARTH_G);  // note the minus sign as the phidgets by default is flipped on the vertical from usual QCN sensors
