@@ -1,6 +1,7 @@
 #include "define.h"
+#include "csensor_usb_phidgets.h"
 //#include "csensor_mac_usb_onavi.h"
-#include "csensor_linux_usb_onavi.h"
+//##include "csensor_linux_usb_onavi.h"
 
 #ifndef _WIN32
   #include <sys/time.h>   // for gettimeofday()
@@ -16,7 +17,9 @@ int main(int argc, char** argv)
     int iRetVal = 0, iErrCnt = 0;
     sm = new CQCNShMem();
 
-    CSensorLinuxUSBONavi sms;
+    CSensorUSBPhidgets sms;
+    //CSensorMacUSBONavi sms;
+    //CSensorLinuxUSBONavi sms;
 
     if (sms.detect()) {
        double tstart = dtime(), tend;
