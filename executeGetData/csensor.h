@@ -14,7 +14,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string>
-#include "mysql.h"
 #ifndef _WIN32
 #include <unistd.h>
 #endif
@@ -70,13 +69,6 @@ class CSensor
 
 		bool getSingleSampleDT();
 		void setSingleSampleDT(const bool bSingle);
-
-		// MySQL functions
-		int connectDatabase();
-		void disconnectDatabase();
-		void freeResult(MYSQL_RES * );
-		MYSQL_RES *query(char *);
-		MYSQL_ROW fetchRow(MYSQL_RES *);
 
 		// pure virtual functions that subclasses of CSensor (for specific sensor types) need to implement
 		virtual bool detect() = 0;   // this detects & initializes a sensor on a Mac G4/PPC or Intel laptop, sets m_iType to 0 if not found

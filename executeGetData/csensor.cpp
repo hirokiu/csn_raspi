@@ -15,7 +15,6 @@
 #include <complex>
 //#include <except.h>
 
-#include "mysql.h"
 #include <pthread.h>
 
 #include <fstream>
@@ -36,26 +35,6 @@ const bool isAllTimeRecord = true;
 const char *base_dir = "/home/pi/csn_raspi";
 const char *data_dir = "/earthquakes";
 const char *file_extension = ".inp";
-
-// local MySQL
-const char *hostname = "localhost";
-const char *username = "root";
-const char *password = "";
-const char *database = "csn";
-
-// seismic.balog.jp MySQL
-/*
-const char *hostname = "";
-const char *username = "";
-const char *password = "";
-const char *database = "";
-*/
-
-unsigned long portnumber = 3306;
-char insert_q[500];
-
-MYSQL *mysql;
-MYSQL_RES *g_res = NULL;
 
 extern double dtime();
 
@@ -253,12 +232,8 @@ inline bool CSensor::mean_xyz(const bool bVerbose)
 	*pt2 = sm->t0active; // save the time into the array, this is the real clock time
 
 	if (bVerbose) {
-		// Everytime INSERT to MySQL
+		// Everytime Record waves.
         if(isAllTimeRecord){
-    		sprintf(insert_q,
-                        "INSERT INTO Event (device_id, t0check, t0active, x_acc, y_acc, z_acc, sample_size, offset) VALUES('%d', '%f', '%f', '%f', '%f', '%f', '%ld', '%ld')",
-                          device_id, sm->t0check, *pt2, *px2, *py2, *pz2, sm->lSampleSize, sm->lOffset);
-    		query(insert_q);
         }
 
         // To check isEarthQuake
@@ -278,11 +253,6 @@ inline bool CSensor::mean_xyz(const bool bVerbose)
 
 				//printf("Recording quits at %f\n", sm->t0check);
 				isEarthQuake = false;
-			}else if( !(isAllTimeRecord) ){
-        		sprintf(insert_q,
-                            "INSERT INTO Event (device_id, t0check, t0active, x_acc, y_acc, z_acc, sample_size, offset) VALUES('%d', '%f', '%f', '%f', '%f', '%f', '%ld', '%ld')",
-                              device_id, sm->t0check, *pt2, *px2, *py2, *pz2, sm->lSampleSize, sm->lOffset);
-                              query(insert_q);
             }
 		} else { // Only check isEarthQuake
             isEarthQuake = isStrikeEarthQuake();
@@ -307,9 +277,6 @@ inline bool CSensor::mean_xyz(const bool bVerbose)
 			return false;   // if we're not debugging, this is a serious run-time problem, so reset time & counters & try again
 		#endif
 	}
-
-    //free(insert_q);
-    //delete [] PreserveXYZ;
 
 	return true;
 }
@@ -402,54 +369,5 @@ bool CSensor::outputEarthQuake(){
     }
     ofs.close();
 
-    //free(filename);
-
     return true;
-}
-
-int CSensor::connectDatabase(){
-  mysql = mysql_init(NULL);
-  if (NULL == mysql){
-    printf("error: %sn", mysql_error(mysql));
-    return -1;
-  }
-  if (NULL == mysql_real_connect(mysql, hostname, username, password, database, portnumber, NULL, 0)){
-  // error
-  printf("error: %sn", mysql_error(mysql));
-  return -1;
-} else {
-  // success
-}
-  return 1;
-}
-void CSensor::disconnectDatabase(){
-  if(g_res){
-    //freeResult(g_res);
-    g_res = NULL;
-  }
-  mysql_close(mysql);
-}
-
-MYSQL_RES *CSensor::query(char *sql_string){
-  if(g_res){
-    freeResult(g_res);
-    g_res = NULL;
-  }
-
-  if (mysql_query(mysql, sql_string)) {
-    printf("error: %sn", mysql_error(mysql));
-    return NULL;
-  }
-
-  g_res = mysql_use_result(mysql);
-  return g_res;
-}
-
-MYSQL_ROW CSensor::fetchRow(MYSQL_RES *res){
-  return mysql_fetch_row(res);
-}
-
-void CSensor::freeResult(MYSQL_RES *res){
-  mysql_free_result(res);
-  g_res = NULL;
 }
