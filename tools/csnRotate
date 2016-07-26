@@ -1,0 +1,22 @@
+/home/pi/csn_raspi/earthquakes/csn.log {
+    daily
+    size 15M
+	missingok
+	rotate 2
+	notifempty
+	sharedscripts
+	postrotate
+		DATE=`date -d '2 hours ago' +%Y%m%d%H%M%S`
+		DIR=`echo ${1%/*}`/old
+		if [ ! -d ${DIR} ]; then
+			mkdir ${DIR}
+		fi
+		for f in ${1}; do
+			if [ -f ${f}.2 ]; then
+				NAME=${DIR}/${f##*/}.${DATE}
+				mv ${f}.2 ${NAME}
+				bzip2 ${NAME}
+			fi
+		done
+	endscript
+}

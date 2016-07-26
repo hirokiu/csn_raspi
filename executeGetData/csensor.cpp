@@ -23,11 +23,6 @@
 
 using namespace std;
 
-// device ID
-// TODO:set from argv
-//const int device_id;
-const int device_id = 100;
-
 extern double dtime();
 
 extern CQCNShMem* sm;

@@ -41,10 +41,8 @@ const float cfTimeWindow = 60.0f;  // time window in seconds
 const double DT = 0.02f;          // delta t sampling interval, i.e. target time between points
 const double DT_SLOW = 0.10f;      // delta t sampling interval for slow/troublesome machines (i.e. can't keep up at <3 samples per dt=.02)
 
-//const char *base_dir = "/home/pi/csn_raspi";
-//const char *base_dir = "/Users/hiroki_u/Documents/git/csn_raspi";
-//const char *data_dir = "/earthquakes";
-//const char *file_extension = ".inp";
+// device ID
+const int device_id = 100;
 
 #define BASE_DIR "/home/pi/csn_raspi"
 #define DATA_DIR "/earthquakes"
