@@ -46,8 +46,7 @@ const double DT_SLOW = 0.10f;      // delta t sampling interval for slow/trouble
 //const char *data_dir = "/earthquakes";
 //const char *file_extension = ".inp";
 
-//#define BASE_DIR "/home/pi/csn_raspi"
-#define BASE_DIR "/Users/hiroki_u/Documents/git/csn_raspi"
+#define BASE_DIR "/home/pi/csn_raspi"
 #define DATA_DIR "/earthquakes"
 #define FILE_EXTENSION ".inp"
 
