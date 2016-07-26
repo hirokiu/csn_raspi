@@ -28,14 +28,6 @@ using namespace std;
 //const int device_id;
 const int device_id = 100;
 
-const bool isAllTimeRecord = true;
-
-// Program path
-// TODO:define.hに移動
-const char *base_dir = "/home/pi/csn_raspi";
-const char *data_dir = "/earthquakes";
-const char *file_extension = ".inp";
-
 extern double dtime();
 
 extern CQCNShMem* sm;
@@ -231,39 +223,49 @@ inline bool CSensor::mean_xyz(const bool bVerbose)
 	*pz2 /= (double) sm->lSampleSize;
 	*pt2 = sm->t0active; // save the time into the array, this is the real clock time
 
-	if (bVerbose) {
-		// Everytime Record waves.
-        if(isAllTimeRecord){
+    // To check isEarthQuake
+    PreserveXYZ *tmp_xyz;
+	tmp_xyz = new PreserveXYZ(px2, py2, pz2, pt2, &(sm->t0check), &(sm->lSampleSize), &(sm->lOffset));
+    preserve_xyz.push_back(*tmp_xyz);
+    delete tmp_xyz;
+
+	if( preserve_xyz.size() > LTA_array_numbers ){
+		preserve_xyz.erase(preserve_xyz.begin());
+        preserve_xyz.shrink_to_fit();
+	}
+
+    // Everytime Record waves.
+    if(isAllTimeRecord){
+        // TODO:
+		#ifdef _DEBUG
+            fprintf(stdout, "X:%12f Y:%12f Z:%12f Active:%12f Check:%12f Sample:%2ld \n\n", *px2, *py2, *pz2, sm->t0active, sm->t0check, sm->lSampleSize);
+        #endif
+        sm->x1 = *px2;
+        sm->y1 = *py2;
+        sm->z1 = *pz2;
+    }
+
+	if(isEarthQuake) { // While a recordTime, couldn't check isEarthQuake
+        // set triggered data
+        PreserveXYZ *tmp_triggered;
+        tmp_triggered = new PreserveXYZ(px2, py2, pz2, pt2, &(sm->t0check), &(sm->lSampleSize), &(sm->lOffset));
+        triggered_xyz.push_back(*tmp_triggered);
+        delete tmp_triggered;
+
+		if(isQuitRecording()) {
+            // output triggered data to file
+            outputEarthQuake();
+
+			//printf("Recording quits at %f\n", sm->t0check);
+            std::deque<PreserveXYZ>().swap(triggered_xyz);
+			isEarthQuake = false;
         }
-
-        // To check isEarthQuake
-		preserve_xyz.push_back(*new PreserveXYZ(px2, py2, pz2, pt2, &(sm->t0check), &(sm->lSampleSize), &(sm->lOffset)));
-
-		if( preserve_xyz.size() > LTA_array_numbers ){
-			preserve_xyz.erase(preserve_xyz.begin());
-		}
-
-		if(isEarthQuake) { // While a recordTime, couldn't check isEarthQuake
-            // set triggered data
-		    triggered_xyz.push_back(*new PreserveXYZ(px2, py2, pz2, pt2, &(sm->t0check), &(sm->lSampleSize), &(sm->lOffset)));
-
-			if(isQuitRecording()) {
-                // output triggered data to file
-                outputEarthQuake();
-
-				//printf("Recording quits at %f\n", sm->t0check);
-				isEarthQuake = false;
-            }
-		} else { // Only check isEarthQuake
-            isEarthQuake = isStrikeEarthQuake();
-		}
+	} else { // Only check isEarthQuake
+        isEarthQuake = isStrikeEarthQuake();
 	}
 
 	// if active time is falling behind the checked (wall clock) time -- set equal, may have gone to sleep & woken up etc
 	sm->t0check += sm->dt;	// t0check is the "ideal" time i.e. start time + the dt interval
-
-	sm->ullSampleTotal += sm->lSampleSize;
-	sm->ullSampleCount++;
 
 	sm->fRealDT += fabs(sm->t0active - sm->t0check);
 
@@ -312,30 +314,34 @@ bool CSensor::isStrikeEarthQuake()
 		LTA_average = LTA_z / (double)LTA_array_numbers;
 		STA_average = STA_z / (double)STA_array_numbers;
 
-		//debug
-		//if(fabs(LTA_average - STA_average) > 0.002) {
-			//fprintf(stdout, "%f %f %f %f %f\n\n", LTA_z, STA_z, LTA_average, STA_average, (LTA_average / STA_average));
-		//}
+		#ifdef _DEBUG
+            if(fabs(LTA_average - STA_average) > 0.002) {
+                fprintf(stdout, "%f %f %f %f %f\n\n", LTA_z, STA_z, LTA_average, STA_average, (LTA_average / STA_average));
+            }
+        #endif
 
         if( (LTA_average == 0.0f) || (STA_average == 0.0f) ) return false;
 
 		if( fabs(LTA_average * limitTimes) < fabs(STA_average) ) {
 			triggerCount++;
 
-			//fprintf(stdout, "%f %f %f %f %f  - Trigger COUNT = %d\n\n", LTA_z, STA_z, LTA_average, STA_average, (LTA_average - STA_average), triggerCount);
+            #ifdef _DEBUG
+			fprintf(stdout, "%f %f %f %f %f  - Trigger COUNT = %d\n\n", LTA_z, STA_z, LTA_average, STA_average, (LTA_average - STA_average), triggerCount);
+            #endif
+
 			if( triggerCount == triggerLimit ){
 				triggerCount = 0;
 				startRecordTime = preserve_xyz.back().tmp_id_t;
 				//printf("Recording starts at %f\n", startRecordTime);	//for logging
 
-                // make treggerd data
-                triggered_xyz.erase(triggered_xyz.begin());
+                // make triggerd data
                 triggered_xyz = preserve_xyz;
 
                 // Trigger event execute.
-                sprintf(system_cmd, "nohup %s/tools/propagation.sh %d %f %f &", base_dir, device_id, startRecordTime, (fabs(STA_average)/fabs(LTA_average)) );
-                //printf("cmd - %s\n",system_cmd);
-                system(system_cmd);
+                #ifndef _DEBUG
+                    sprintf(system_cmd, "nohup %s/tools/propagation.sh %d %f %f &", BASE_DIR, device_id, startRecordTime, (fabs(STA_average)/fabs(LTA_average)) );
+                    system(system_cmd);
+                #endif
 
 				return true;
 			}
@@ -352,7 +358,7 @@ bool CSensor::isStrikeEarthQuake()
 bool CSensor::outputEarthQuake(){
 
     char filename[128];
-    sprintf(filename, "%s%s/%d_%f%s", base_dir, data_dir, device_id, startRecordTime, file_extension);
+    sprintf(filename, "%s%s/%d_%f%s", BASE_DIR, DATA_DIR, device_id, startRecordTime, FILE_EXTENSION);
 
 	std::ofstream ofs( filename );
     if (!ofs.is_open()) {

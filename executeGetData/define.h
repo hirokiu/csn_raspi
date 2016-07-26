@@ -4,7 +4,7 @@
 /**
   \file    define.h
   \author  Carl Christensen, carlgt1@hotmail.com
-  
+
  *  global defines used for the Quake Catcher Network client, graphics, and QCNLive programs
 
  *  Created by Carl Christensen on 08/11/2007.
@@ -41,14 +41,26 @@ const float cfTimeWindow = 60.0f;  // time window in seconds
 const double DT = 0.02f;          // delta t sampling interval, i.e. target time between points
 const double DT_SLOW = 0.10f;      // delta t sampling interval for slow/troublesome machines (i.e. can't keep up at <3 samples per dt=.02)
 
+//const char *base_dir = "/home/pi/csn_raspi";
+//const char *base_dir = "/Users/hiroki_u/Documents/git/csn_raspi";
+//const char *data_dir = "/earthquakes";
+//const char *file_extension = ".inp";
+
+//#define BASE_DIR "/home/pi/csn_raspi"
+#define BASE_DIR "/Users/hiroki_u/Documents/git/csn_raspi"
+#define DATA_DIR "/earthquakes"
+#define FILE_EXTENSION ".inp"
+
+const bool isAllTimeRecord = true;
+
 // emulates the full-blown QCN Shared Memory struct
 class CQCNShMem
 {
   public:
-    CQCNShMem() 
-    { 
-         memset(this, 0x00, sizeof(CQCNShMem)); 
-         dt = DT; 
+    CQCNShMem()
+    {
+         memset(this, 0x00, sizeof(CQCNShMem));
+         dt = DT;
          fSignificanceFilterCutoff = DEFAULT_SIGCUTOFF;
          t0check = dtime();
          t0active = dtime();
@@ -57,12 +69,16 @@ class CQCNShMem
 
     double dt; // this is the delta-time between point readings, currently .02 for the Mac sensor, not needed to be volatile
     float fSignificanceFilterCutoff;
-    int iNumReset; 
+    int iNumReset;
 
     // arrays for the timeseries data -- will be in shared memory to share between procs, i.e. main app & graphics app
     float  x0[MAXI];
     float  y0[MAXI];
     float  z0[MAXI];             /*  DECLARE TIME SERIES             */
+
+    float  x1;
+    float  y1;
+    float  z1;
 
     double t0[MAXI]; // keep track of each time?
 
@@ -72,7 +88,7 @@ class CQCNShMem
 
     long lOffset; // current position/index into the arrays
 
-    double dTimeError; // a percentage error between the real time and the t0 time 
+    double dTimeError; // a percentage error between the real time and the t0 time
     long lSampleSize; // the sample size for this reading at lOffset
         unsigned long long ullSampleCount;  // used to compute a running average of sample count
         unsigned long long ullSampleTotal;
@@ -95,19 +111,19 @@ typedef vector<string> ZipFileList;
 #endif
 
 // first define some useful math functions
-/*! 
-   \def QCN_SQR(A} 
-   takes \a A to the second power (i.e. \a A^2 or \a A**2) 
+/*!
+   \def QCN_SQR(A}
+   takes \a A to the second power (i.e. \a A^2 or \a A**2)
 */
 #define QCN_SQR(A)   ((A)*(A))
 
-/*! 
+/*!
    \def QCN_ROUND(A)
-   rounds \a A up or down from double/float to a long 
+   rounds \a A up or down from double/float to a long
 */
 #define QCN_ROUND(A) (((A)>=0) ? (long)((A) + .5) : (long)((A) - .5))
 
-/*! 
+/*!
    \def QCN_INPUT_LOGICAL_NAME "qcn_0"
    default BOINC/QCN input file logical name while will get resolved to a real input file in boinc/projects/qcn directory
 */
@@ -185,7 +201,7 @@ typedef vector<string> ZipFileList;
 
 // the size of a self-appointed station string
 #define SIZEOF_STATION_STRING 8
- 
+
 #if !defined(_WIN32) && !defined(__APPLE_CC__)
    // define Linux joystick device for JoyWarrior
    #define LINUX_JOYSTICK_NUM   9
@@ -263,8 +279,8 @@ const double g_DT_SNAIL = 0.20;      // for horrible machines but maybe let them
 
 enum e_os      { OS_MAC_INTEL, OS_MAC_PPC, OS_WINDOWS, OS_LINUX };
 
-enum e_retcode { ERR_NONE = 0, ERR_FINISHED = 1, ERR_NO_SENSOR = 99, ERR_SHMEM, ERR_TIME_CHANGE, ERR_INIT, 
-    ERR_CRASH, ERR_DIR_TRIGGER, ERR_DIR_IMAGES, ERR_INPUT_FILE, ERR_INPUT_PARSE, 
+enum e_retcode { ERR_NONE = 0, ERR_FINISHED = 1, ERR_NO_SENSOR = 99, ERR_SHMEM, ERR_TIME_CHANGE, ERR_INIT,
+    ERR_CRASH, ERR_DIR_TRIGGER, ERR_DIR_IMAGES, ERR_INPUT_FILE, ERR_INPUT_PARSE,
     ERR_ABORT, ERR_NUM_RESET, ERR_HEARTBEAT, ERR_SUSPEND, ERR_CREATE_THREAD, ERR_SIGNAL };
 
 // values in the qcn_variety table
@@ -272,13 +288,13 @@ enum e_trigvariety { TRIGGER_VARIETY_FINALSTATS = -2, TRIGGER_VARIETY_QUAKELIST,
 
 enum e_maxmin  { E_DX, E_DY, E_DZ, E_DS };
 
-enum e_view    { VIEW_PLOT_3D = 1, VIEW_PLOT_2D, VIEW_EARTH_DAY, VIEW_EARTH_NIGHT, VIEW_EARTH_COMBINED, VIEW_CUBE, VIEW_GAME }; 
+enum e_view    { VIEW_PLOT_3D = 1, VIEW_PLOT_2D, VIEW_EARTH_DAY, VIEW_EARTH_NIGHT, VIEW_EARTH_COMBINED, VIEW_CUBE, VIEW_GAME };
 // note TRIGGER_DEMO after TRIGGER_ALL so just gets used once
 enum e_trigger { TRIGGER_UNSET, TRIGGER_IMMEDIATE, TRIGGER_1MIN, TRIGGER_2MIN, TRIGGER_DEMO };  // TRIGGER_10SEC, TRIGGER_20SEC, TRIGGER_30SEC
 enum e_endian  { ENDIAN_LITTLE, ENDIAN_BIG };
 enum e_where   { WHERE_MAIN_STARTUP,
-                 WHERE_MAIN_PROJPREFS, 
-                 WHERE_THREAD_SENSOR_INITIAL_MEAN, 
+                 WHERE_MAIN_PROJPREFS,
+                 WHERE_THREAD_SENSOR_INITIAL_MEAN,
                  WHERE_THREAD_SENSOR_BASELINE,
                  WHERE_THREAD_SENSOR_TIME_ERROR,
 				 WHERE_THREAD_SENSOR_DETACH
@@ -292,7 +308,7 @@ enum e_quake   { QUAKE_CURRENT, QUAKE_WORLD85, QUAKE_DEADLIEST };
 
 // enumerate the various sensor types, we can trickle this int back for easier comparisons
 // don't forget to update in the csensor.cpp CSensor constructor
-enum e_sensor  { 
+enum e_sensor  {
                  SENSOR_NOTFOUND = 0,  // 0
                  SENSOR_MAC_PPC_TYPE1, // 1
                  SENSOR_MAC_PPC_TYPE2, // 2
@@ -419,7 +435,7 @@ struct FDSET_GROUP {
 // time to wait if they were in interactive mode before sending a trigger, timeout in 60 seconds
 #define DECAY_INTERACTIVE_SECONDS 60.0f
 
-// how often to write out trigger file if in demo mode 
+// how often to write out trigger file if in demo mode
 #ifdef QCN_RAW_DATA
   #define DEMO_TRIGGER_TIME_SECONDS 3600.0f
 #else
@@ -427,7 +443,7 @@ struct FDSET_GROUP {
 #endif
 
 // number of elements in the shared mem time offset arrays
-//#define MAX_TIME_ARRAY    10 
+//#define MAX_TIME_ARRAY    10
 
 #define MAX_TRIGGER_LAST  100
 #define MAX_TICK_MARK      13
@@ -463,13 +479,13 @@ struct FDSET_GROUP {
 #define MAX_NUM_RESET    1000L     // maximum number of reset errors per workunit
 #define TIME_BACK_SECONDS_MAX 7200L  // max number of minutes to go back from the GUI
 
-#define SAC_NUMHEADBYTES 632L  // floats and longs are 440 rest are characters 
+#define SAC_NUMHEADBYTES 632L  // floats and longs are 440 rest are characters
 #define SAC_VERSION 6L
 
 #define QCN_BYTE unsigned char
 #define QCN_CBYTE const unsigned char
 
-//#define MAXI 150000L   // this is 4 hours 10 minutes at dt of .1 seconds 
+//#define MAXI 150000L   // this is 4 hours 10 minutes at dt of .1 seconds
 //#define MAXI 360000L   // this is 2 hour at dt of .02 seconds
 //#define MAXI 720000L   // this is 4 hours at dt of .02 seconds
 #define MAXI 270000L     // this is 1.5 hour at dt of .02 seconds
@@ -486,7 +502,7 @@ struct FDSET_GROUP {
 #define TRICKLE_DOWN_SEND         "<sendme>"
 #define TRICKLE_DOWN_SEND_END_TAG "</sendme>"
 
-// this is the max number of the array index awinsize used to shift the graphics window 
+// this is the max number of the array index awinsize used to shift the graphics window
 #define MAX_KEY_WINSIZE 3
 // the reduction/rebin for the data array size for the graphics
 #define PLOT_ARRAY_SIZE 500
@@ -541,7 +557,7 @@ enum e_drawtype { NATION = 0, PLATE, COUNTRY, COASTLINE };
 #  define IMG_EARTH_NIGHT       "earthnight4096.jpg"
 #else
 //   Linux gets smaller pics as can't figure out why the jpeg doesn't show on Linux OpenGL
-//   other than a smaller pic works!  It's not stack size as I've set it up high and still 
+//   other than a smaller pic works!  It's not stack size as I've set it up high and still
 //   does not display on Linux
 #  define IMG_EARTH_DAY         "earthday2048.jpg"
 #  define IMG_EARTH_NIGHT       "earthnight2048.jpg"
@@ -568,9 +584,8 @@ enum e_drawtype { NATION = 0, PLATE, COUNTRY, COASTLINE };
 #define MIN_SCALE               0.5f    // how much can we zoom out
 #define MAX_SCALE               10.0f    // and in
 #define LIGHT_INFINITY     -1000.0f  // light source is almost at infinity
-#define ROTATION_SPEED_DEFAULT 0.5f 
+#define ROTATION_SPEED_DEFAULT 0.5f
 
 #endif // GRAPHICS_PROGRAM
 
 #endif
-

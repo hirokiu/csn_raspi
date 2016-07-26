@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string>
+#include <deque>
 #ifndef _WIN32
 #include <unistd.h>
 #endif
@@ -42,10 +43,12 @@ class CSensor
 					tmp_t = *t; tmp_id_t = *id_t;
 					sampleSize = *size; offSet = *offset;
 				}
+				~PreserveXYZ(){}  // デストラクタ
+
 		};
-		vector<PreserveXYZ> preserve_xyz;
-		vector<PreserveXYZ> past_preserve_xyz;
-		vector<PreserveXYZ> triggered_xyz;
+		std::deque<PreserveXYZ> preserve_xyz;
+		std::deque<PreserveXYZ> triggered_xyz;
+		std::deque<PreserveXYZ> info_xyz;
 
 		// private function
 		virtual bool read_xyz(float& x1, float& y1, float& z1) = 0;   // read raw sensor data, pure virtual function subclass implemented
@@ -78,6 +81,7 @@ class CSensor
 		virtual const e_sensor getTypeEnum(); // return the iType member variable
 		virtual const char* getTypeStr();  // return the iType member variable
 		virtual bool mean_xyz(const bool bVerbose);   // mean sensor data, implemented here but can be overridden, not virtual
+
 };
 
 #endif

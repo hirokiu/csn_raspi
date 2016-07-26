@@ -1,13 +1,18 @@
 #include "define.h"
-#include "csensor_usb_phidgets.h"
-//#include "csensor_mac_usb_onavi.h"
+//#include "csensor_usb_phidgets.h"
+#include "csensor_mac_usb_onavi.h"
 //##include "csensor_linux_usb_onavi.h"
 
 #ifndef _WIN32
   #include <sys/time.h>   // for gettimeofday()
 #endif
 
+#include <fstream>
+#include <iostream>
+#include <iomanip>
+
 CQCNShMem* sm = NULL;
+std::ofstream writing_file;
 
 // add your sensor class below, i.e. CSensorTest
 int main(int argc, char** argv)
@@ -17,8 +22,8 @@ int main(int argc, char** argv)
     int iRetVal = 0, iErrCnt = 0;
     sm = new CQCNShMem();
 
-    CSensorUSBPhidgets sms;
-    //CSensorMacUSBONavi sms;
+    //CSensorUSBPhidgets sms;
+    CSensorMacUSBONavi sms;
     //CSensorLinuxUSBONavi sms;
 
     if (sms.detect()) {
@@ -27,18 +32,39 @@ int main(int argc, char** argv)
        sm->t0active = tstart; // use the function in boinc/lib
        sm->t0check = sm->t0active + sm->dt;
 
+        char filename[128];
+        sprintf(filename, "%s%s/csn.log", BASE_DIR, DATA_DIR);
+
+        writing_file.open(filename, std::ios::out | std::ios::app);
+        if (!writing_file.is_open()) {
+            fprintf(stdout, "Couldn't open log file!\n");
+            return false;
+        }
+
        // assuming we're at 50Hz, run 500 times for 10 seconds of output, note array only holds 10,000 so don't go past that!
 			 //sm->lOffset++;	//debug
        //for (sm->lOffset = 0; sm->lOffset < (int) (RUN_SECONDS / DT); sm->lOffset++) {	//debug
-       while(true){
-           if (!sms.mean_xyz(true)) iErrCnt++;   // pass in true for verbose output, false for silent
-       }
+           while(true){
+               if (!sms.mean_xyz(true)) iErrCnt++;   // pass in true for verbose output, false for silent
+               #ifdef _DEBUG
+                    fprintf(stdout, "___ X:%12f Y:%12f Z:%12f Active:%12f Check:%12f Sample:%2ld \n\n", sm->x1, sm->y1, sm->z1, sm->t0active, sm->t0check, sm->lSampleSize);
+               #endif
+               if( isAllTimeRecord ){
+                   std::cout.setf(std::ios_base::fixed,std::ios_base::floatfield);
+                   writing_file << std::setprecision(20) <<
+                               sm->t0active << "," <<
+                               sm->x1 << "," <<
+                               sm->y1 << "," <<
+                               sm->z1 << std::endl;
+                           }
+
+           }
+           writing_file.close();
 
        tend = dtime();
        fprintf(stdout, "%f seconds of samples read from %f to %f in %f seconds real time -- error of %3.3f %c\n"
                "%d Timing Errors Encountered\n",
 	  RUN_SECONDS, tstart, tend, tend - tstart, ((RUN_SECONDS - (tend - tstart)) / RUN_SECONDS) * 100.0f, '%', iErrCnt);
-
     }
     else {
        fprintf(stdout, "No sensor detected!\n");
