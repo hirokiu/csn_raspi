@@ -1,7 +1,7 @@
 #include "define.h"
 //#include "csensor_usb_phidgets.h"
 //#include "csensor_mac_usb_onavi.h"
-##include "csensor_linux_usb_onavi.h"
+#include "csensor_linux_usb_onavi.h"
 
 #ifndef _WIN32
   #include <sys/time.h>   // for gettimeofday()
@@ -51,7 +51,7 @@ int main(int argc, char** argv)
                #endif
                if( isAllTimeRecord ){
                    std::cout.setf(std::ios_base::fixed,std::ios_base::floatfield);
-                   writing_file << std::setprecision(12) <<
+                   writing_file << std::setprecision(14) <<
                                sm->t0active << "," <<
                                sm->x1 << "," <<
                                sm->y1 << "," <<

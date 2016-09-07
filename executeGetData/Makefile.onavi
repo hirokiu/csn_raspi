@@ -27,7 +27,7 @@ else
 endif
 
 BINARY   = smsExecute
-CCFLAGS  = -g -O0 $(THREAD)
+CCFLAGS  = -g -O0 $(THREAD) -std=c++11
 LDFLAGS  =
 INCLUDES =
 LIBS =
