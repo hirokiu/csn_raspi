@@ -287,41 +287,75 @@ bool CSensor::isQuitRecording() {
 
 bool CSensor::isStrikeEarthQuake()
 {
+	float LTA_x = 0.0f, STA_x = 0.0f;
+	float LTA_y = 0.0f, STA_y = 0.0f;
 	float LTA_z = 0.0f, STA_z = 0.0f;
-	double LTA_average = 0.0f, STA_average = 0.0f;
+	double LTA_x_average = 0.0f, STA_x_average = 0.0f;
+	double LTA_y_average = 0.0f, STA_y_average = 0.0f;
+	double LTA_z_average = 0.0f, STA_z_average = 0.0f;
+    double LTA_x_offset = 0.0f;
+    double LTA_y_offset = 0.0f;
     double LTA_z_offset = 0.0f;
 
 	if(preserve_xyz.size() == LTA_array_numbers)
 	{
 		for(int i = preserve_xyz.size()-1; i >= 0; i--){
+			LTA_x += preserve_xyz[i].tmp_x; // origin
+			LTA_y += preserve_xyz[i].tmp_y; // origin
 			LTA_z += preserve_xyz[i].tmp_z; // origin
         }
+		LTA_x_offset = LTA_x / (double)LTA_array_numbers;
+		LTA_y_offset = LTA_y / (double)LTA_array_numbers;
 		LTA_z_offset = LTA_z / (double)LTA_array_numbers;
 
+        LTA_x = 0.0f;
+        LTA_y = 0.0f;
         LTA_z = 0.0f;
 		for(int i = preserve_xyz.size()-1; i >= 0; i--)
 		{
+			LTA_x += fabs(preserve_xyz[i].tmp_x - LTA_x_offset);
+			LTA_y += fabs(preserve_xyz[i].tmp_y - LTA_y_offset);
 			LTA_z += fabs(preserve_xyz[i].tmp_z - LTA_z_offset);
 
-			if(i == LTA_STA_diff) STA_z = LTA_z;
+			if(i == LTA_STA_diff){
+				STA_x = LTA_x;
+				STA_y = LTA_y;
+				STA_z = LTA_z;
+			}
 		}
 
-		LTA_average = LTA_z / (double)LTA_array_numbers;
-		STA_average = STA_z / (double)STA_array_numbers;
+		LTA_x_average = LTA_x / (double)LTA_array_numbers;
+		LTA_y_average = LTA_y / (double)LTA_array_numbers;
+		LTA_z_average = LTA_z / (double)LTA_array_numbers;
+		STA_x_average = STA_x / (double)STA_array_numbers;
+		STA_y_average = STA_y / (double)STA_array_numbers;
+		STA_z_average = STA_z / (double)STA_array_numbers;
 
 		#ifdef _DEBUG
-            if(fabs(LTA_average - STA_average) > 0.002) {
-                fprintf(stdout, "%f %f %f %f %f\n\n", LTA_z, STA_z, LTA_average, STA_average, (LTA_average / STA_average));
+            if(fabs(LTA_x_average - STA_x_average) > 0.002) {
+                fprintf(stdout, "X : %f %f %f %f %f\n\n", LTA_x, STA_x, LTA_x_average, STA_x_average, (LTA_x_average / STA_x_average));
+            }
+            if(fabs(LTA_y_average - STA_y_average) > 0.002) {
+                fprintf(stdout, "Y : %f %f %f %f %f\n\n", LTA_y, STA_y, LTA_y_average, STA_y_average, (LTA_y_average / STA_y_average));
+            }
+            if(fabs(LTA_z_average - STA_z_average) > 0.002) {
+                fprintf(stdout, "Z : %f %f %f %f %f\n\n", LTA_z, STA_z, LTA_z_average, STA_z_average, (LTA_z_average / STA_z_average));
             }
         #endif
 
-        if( (LTA_average == 0.0f) || (STA_average == 0.0f) ) return false;
+        if( ((LTA_x_average == 0.0f) || (STA_x_average == 0.0f)) 
+        	&& ((LTA_y_average == 0.0f) || (STA_y_average == 0.0f))
+        	&& ((LTA_z_average == 0.0f) || (STA_z_average == 0.0f)) ) return false;
 
-		if( fabs(LTA_average * limitTimes) < fabs(STA_average) ) {
+		if( (fabs(LTA_x_average * limitTimes) < fabs(STA_x_average))
+			|| (fabs(LTA_y_average * limitTimes) < fabs(STA_y_average))
+			|| (fabs(LTA_z_average * limitTimes) < fabs(STA_z_average)) ) {
 			triggerCount++;
 
             #ifdef _DEBUG
-			fprintf(stdout, "%f %f %f %f %f  - Trigger COUNT = %d\n\n", LTA_z, STA_z, LTA_average, STA_average, (LTA_average - STA_average), triggerCount);
+				fprintf(stdout, "X: %f %f %f %f %f  - Trigger COUNT = %d\n\n", LTA_x, STA_x, LTA_x_average, STA_x_average, (LTA_x_average - STA_x_average), triggerCount);
+				fprintf(stdout, "Y: %f %f %f %f %f  - Trigger COUNT = %d\n\n", LTA_y, STA_y, LTA_y_average, STA_y_average, (LTA_y_average - STA_y_average), triggerCount);
+				fprintf(stdout, "Z: %f %f %f %f %f  - Trigger COUNT = %d\n\n", LTA_z, STA_z, LTA_z_average, STA_z_average, (LTA_z_average - STA_z_average), triggerCount);
             #endif
 
 			if( triggerCount == triggerLimit ){
@@ -334,7 +368,7 @@ bool CSensor::isStrikeEarthQuake()
 
                 // Trigger event execute.
                 #ifndef _DEBUG
-                    sprintf(system_cmd, "nohup %s/tools/propagation.sh %d %f %f &", BASE_DIR, device_id, startRecordTime, (fabs(STA_average)/fabs(LTA_average)) );
+                    sprintf(system_cmd, "nohup %s/tools/propagation.sh %d %f %f &", BASE_DIR, device_id, startRecordTime, (fabs(STA_x_average)/fabs(LTA_x_average)), (fabs(STA_y_average)/fabs(LTA_z_average)), (fabs(STA_z_average)/fabs(LTA_z_average)) );
                     system(system_cmd);
                 #endif
 
@@ -346,8 +380,7 @@ bool CSensor::isStrikeEarthQuake()
 			return false;
 		}
 	}
-	else
-		return false;
+	else return false;
 }
 
 bool CSensor::outputEarthQuake(){
