@@ -1,11 +1,12 @@
 /home/pi/csn_raspi/earthquakes/csn.log
 {
-    rotate 240
+    rotate 8760
     hourly
+    compress
     size 1M
     missingok
     notifempty
     copytruncate
     dateext
-    dateformat _%Y%m%d-%s
+    dateformat _%Y%m%d%H%M-%s
 }
