@@ -8,5 +8,5 @@
     notifempty
     copytruncate
     dateext
-    dateformat _%Y%m%d%H%M-%s
+    dateformat _%Y%m%d-%H%M-%s
 }
