@@ -30,15 +30,15 @@ bool g_bStop = false;
 
 // config for recording trigger
 const float LTA_second = 10.0f;
-const float STA_second = 3.0f;
+const float STA_second = 5.0f;
 
 int LTA_array_numbers = (int)(LTA_second / DT); //DT is defined in define.h
 int STA_array_numbers = (int)(STA_second / DT); //DT is defined in define.h
 int LTA_STA_diff = LTA_array_numbers - STA_array_numbers;
 
-const float limitTimes = 3.0f;
+const float limitTimes = 1.5f;
 
-const int triggerLimit = 4;
+const int triggerLimit = 1;
 int triggerCount = 0;
 
 const double recordTime = 60.0f; //second
@@ -386,7 +386,7 @@ bool CSensor::isStrikeEarthQuake()
 bool CSensor::outputEarthQuake(){
 
     char filename[128];
-    sprintf(filename, "%s%s/%d_%f%s", BASE_DIR, DATA_DIR, device_id, startRecordTime, FILE_EXTENSION);
+    sprintf(filename, "%s%s/%d_%f%s", BASE_DIR, TRIG_DIR, device_id, startRecordTime, FILE_EXTENSION);
 
 	std::ofstream ofs( filename );
     if (!ofs.is_open()) {

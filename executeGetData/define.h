@@ -41,12 +41,15 @@ const float cfTimeWindow = 60.0f;  // time window in seconds
 const double DT = 0.02f;          // delta t sampling interval, i.e. target time between points
 const double DT_SLOW = 0.10f;      // delta t sampling interval for slow/troublesome machines (i.e. can't keep up at <3 samples per dt=.02)
 
+// hostname
+#define HOST_NAME ""; // set devide name.
 // device ID
-const int device_id = 100;
+const int device_id = ; // set device id.
 
 #define BASE_DIR "/home/pi/csn_raspi"
-#define DATA_DIR "/earthquakes"
-#define FILE_EXTENSION ".inp"
+#define TRIG_DIR "/earthquakes"
+#define DATA_DIR "/data"
+#define FILE_EXTENSION ".csv"
 
 const bool isAllTimeRecord = true;
 
