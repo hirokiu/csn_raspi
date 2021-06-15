@@ -5,7 +5,7 @@ ifeq ($(UNAME),Darwin)
     CC     = c++
     LINKER = c++
     OS     = i686-apple-darwin
-    THREAD = 
+    THREAD =
     THREAD_LIB =
     STATIC =
     OS_ENV = mac
@@ -30,9 +30,9 @@ BINARY   = smsExecute
 CCFLAGS  = -g -O0 $(THREAD)
 LDFLAGS  =
 INCLUDES_PHIDGETS = -I/usr/include/
-LIBS_PHIDGETS = -lphidget21
-INCLUDES = -I/usr/include/mysql/
-LIBS = -L/usr/lib64/mysql/ -lmysqlclient -ldl
+LIBS_PHIDGETS = -lphidget22
+INCLUDES =
+LIBS =
 
 RM            = rm -f
 OBJEXT        = o
@@ -41,7 +41,7 @@ OBJEXT        = o
 OBJS =   \
          csensor.$(OBJEXT)            \
          csensor_usb_phidgets.$(OBJEXT)             \
-         main.$(OBJEXT)  
+         main.$(OBJEXT)
 
 all       : Makefile $(BINARY)
 $(BINARY) : $(OBJS)
@@ -53,6 +53,4 @@ csensor_usb_phidgets.$(OBJEXT) :
 main.$(OBJEXT):
 	$(CC) $(CCFLAGS) $(LDFLAGS) $(INCLUDES) -c main.cpp
 clean   :
-	$(RM) $(OBJS).$(OBJEXT) $(BINARY) core a.out  
-
-      
+	$(RM) $(OBJS).$(OBJEXT) $(BINARY) core a.out

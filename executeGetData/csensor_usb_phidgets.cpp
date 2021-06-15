@@ -34,7 +34,7 @@ or
 
 // #include "main.h"
 #include "csensor_usb_phidgets.h"
-#include <phidget21.h>
+#include <phidget22.h>
 
 #define _DEBUG
 

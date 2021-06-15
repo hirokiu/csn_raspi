@@ -15,10 +15,10 @@
 
 #include <stdio.h>
 #ifdef _WIN32
-#include "phidgets/phidget21win.h"
+#include "phidgets/phidget22win.h"
 #else
-//#include "phidgets/phidget21.h"
-#include <phidget21.h>
+//#include "phidgets/phidget22.h"
+#include <phidget22.h>
 #endif
 
 #include "csensor.h"
