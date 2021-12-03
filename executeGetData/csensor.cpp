@@ -386,7 +386,7 @@ bool CSensor::isStrikeEarthQuake()
 bool CSensor::outputEarthQuake(){
 
     char filename[128];
-    sprintf(filename, "%s%s/%d_%f%s", BASE_DIR, TRIG_DIR, device_id, startRecordTime, FILE_EXTENSION);
+    sprintf(filename, "%s%s/%03d_%f%s", BASE_DIR, TRIG_DIR, device_id, startRecordTime, FILE_EXTENSION);
 
 	std::ofstream ofs( filename );
     if (!ofs.is_open()) {
