@@ -27,9 +27,6 @@
 #include<sys/types.h>
 #include<errno.h>
 
-static int ret;
-static int fd;
-
 const int g_ciLen = 44;  // ##XXYYZZC
 extern CQCNShMem* sm;
 
@@ -60,10 +57,10 @@ void CSensorWitMotion::closePort()
     setPort(); // sets to -1 i.e. inactive/notfound
   }
 
-    assert(fd);
-    close(fd);
+    assert(m_fd);
+    close(m_fd);
 
-    return 0;
+    //return 0;
 }
 
 bool CSensorWitMotion::detect()
@@ -92,19 +89,19 @@ bool CSensorWitMotion::detect()
 
     //fd = open(pathname, O_RDWR|O_NOCTTY);
     m_fd = open(strDevice, O_RDWR | O_NOCTTY);
-    delete [] strDevice; // don't need strDevice after this call
-    strDevice = NULL;
 
     if (-1 == m_fd)
     {
 #ifdef _DEBUG
-        fprintf(stderr, "Cannot create ONavi fd\n");
+        fprintf(stderr, "Cannot create WitMotion fd\n");
 #endif
         perror("Can't Open Serial Port");
         return false;
     }
     else
         printf("open %s success!\n", strDevice);
+        delete [] strDevice; // don't need strDevice after this call
+        strDevice = NULL;
     if(isatty(STDIN_FILENO)==0)
         printf("standard input is not a terminal device\n");
     else
@@ -115,7 +112,7 @@ bool CSensorWitMotion::detect()
     struct termios newtio,oldtio;
     if  ( tcgetattr(m_fd,&oldtio)  !=  0) {
         perror("SetupSerial 1");
-        printf("tcgetattr( fd,&oldtio) -> %d\n",tcgetattr(m_fd,&oldtio));
+        printf("tcgetattr( m_fd,&oldtio) -> %d\n",tcgetattr(m_fd,&oldtio));
         return false;
     }
     bzero( &newtio, sizeof( newtio ) );
@@ -204,6 +201,8 @@ switch( N_SPEED )
     setPort((int) getTypeEnum());
 
     fprintf(stdout, "WitMotion sensor %s detected.\n",getTypeStr());
+    //memset(&r_buf, 0x00, 1024);
+    bzero(r_buf,1024);
     return true;
 
 }
@@ -214,7 +213,6 @@ bool CSensorWitMotion::read_xyz(float& x1, float& y1, float& z1)
 {
     // return true if read OK, false if error
     // the real timing work, i.e. the 50Hz sampling etc is done in mean_xyz in CSensor -- you shouldn't need (or want!) to edit that
-    bzero(r_buf,1024);
 
     static float x0 = 0.0f, y0 = 0.0f, z0 = 0.0f; // keep last values
     bool bRet = true;
@@ -222,7 +220,7 @@ bool CSensorWitMotion::read_xyz(float& x1, float& y1, float& z1)
     QCN_BYTE bytesIn[g_ciLen+1], cs;  // note pad bytesIn with null \0
     int x = 0, y = 0, z = 0;
     int iCS = 0;
-    int iRead = 0;
+    static int iRead = 0;
         x1 = x0; y1 = y0; z1 = z0;  // use last good values
 
     const char cWrite = '*';
@@ -233,11 +231,12 @@ bool CSensorWitMotion::read_xyz(float& x1, float& y1, float& z1)
     }
 
 
-    if( (ret = recv_data(r_buf,g_ciLen)) == 1 )
+    if( (ret = recv_data(r_buf,g_ciLen)) != -1 )
     {
         for (int i=0;i<ret;i++)
         {
-            // ParseData(r_buf[i]);
+            ParseData(r_buf[i]);
+/*
             static char chrBuf[100];
             static unsigned char chrCnt=0;
             signed short sData[4];
@@ -245,25 +244,27 @@ bool CSensorWitMotion::read_xyz(float& x1, float& y1, float& z1)
             char cTemp=0;
 
             chrBuf[chrCnt++]=r_buf[i];
-            if (chrCnt<11) return;
+            if (chrCnt<11) return false;
             for (j=0;j<10;j++) cTemp+=chrBuf[j];
             if( (chrBuf[0] != 0x55) || ((chrBuf[1]&0x50) != 0x50) || (cTemp != chrBuf[10]) )
             {
                 printf("Error:%x %x\r\n",chrBuf[0],chrBuf[1]);
                 memcpy(&chrBuf[0],&chrBuf[1],10);
                 chrCnt--;
-                return;
+                return false;
             }
 
             memcpy(&sData[0],&chrBuf[2],8);
             switch(chrBuf[1])
             {
                 case 0x51:
+					for (i=0;i<3;i++) a[i] = (float)sData[i]/32768.0*16.0;
                     x1 = (float)sData[0]/32768.0*16.0;
                     y1 = (float)sData[1]/32768.0*16.0;
                     z1 = (float)sData[2]/32768.0*16.0;
+					printf("acc : %6.16f %6.16f %6.16f ",x1,y1,z1);
                     break;
-                /* TODO: Angleなど他のデータ用
+                //  TODO: Angleなど他のデータ用
                 case 0x52:
                     for (j=0;j<3;j++) w[j] = (float)sData[j]/32768.0*2000.0;
                     //printf("w:%7.3f %7.3f %7.3f ",w[0],w[1],w[2]);
@@ -276,15 +277,16 @@ bool CSensorWitMotion::read_xyz(float& x1, float& y1, float& z1)
                     for (j=0;j<3;j++) h[j] = (float)sData[j];
                     //printf("h:%4.0f %4.0f %4.0f ",h[0],h[1],h[2]);
                     break;
-                */
             }
             chrCnt=0;
+            */
         }
+        x1 = a[0]; y1 = a[1]; z1 = a[2];  // preserve values
         x0 = x1; y0 = y1; z0 = z1;  // preserve values
         bRet = true;
     }
     else {
-        fprintf(stderr, "%f: WitMotion Error in read_xyz() - write(*) returned %d -- errno = %d : %s\n", sm->t0active, iRead, errno, strerror(errno));
+        fprintf(stderr, "%f: WitMotion Error in read_xyz() - write(*) returned %d -- errno = %d : %s\n", sm->t0active, ret, errno, strerror(errno));
         bRet = false;
     }
 
@@ -309,7 +311,7 @@ bool CSensorWitMotion::read_xyz(float& x1, float& y1, float& z1)
     }
     */
 
-    //usleep(1000000);  // uncommenting this line will force timing errors since it sleeps a second every read!
+    //usleep(10000);  // uncommenting this line will force timing errors since it sleeps a second every read!
     return bRet;
 
 }
@@ -327,10 +329,7 @@ int CSensorWitMotion::recv_data(char* recv_buffer,int length)
 	return length;
 }
 
-/*
-float a[3],w[3],Angle[3],h[3];
-void ParseData(char chr)
-//float ParseData(char chr)
+void CSensorWitMotion::ParseData(char chr)
 {
         static char chrBuf[100];
         static unsigned char chrCnt=0;
@@ -350,7 +349,6 @@ void ParseData(char chr)
                     for (i=0;i<3;i++) a[i] = (float)sData[i]/32768.0*16.0;
                     //time(&now);
                     //printf("\r\nT:%s a:%6.16f %6.16f %6.16f ",asctime(localtime(&now)),a[0],a[1],a[2]);
-
                     break;
                 case 0x52:
                     for (i=0;i<3;i++) w[i] = (float)sData[i]/32768.0*2000.0;
@@ -363,12 +361,10 @@ void ParseData(char chr)
                 case 0x54:
                     for (i=0;i<3;i++) h[i] = (float)sData[i];
                     //printf("h:%4.0f %4.0f %4.0f ",h[0],h[1],h[2]);
-
                     break;
         }
         chrCnt=0;
 }
-*/
 
 /*
 int main(void)

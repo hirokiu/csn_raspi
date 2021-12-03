@@ -1,7 +1,8 @@
 #include "define.h"
 //#include "csensor_usb_phidgets.h"
 //#include "csensor_mac_usb_onavi.h"
-#include "csensor_linux_usb_onavi.h"
+//#include "csensor_linux_usb_onavi.h"
+#include "csensor_witmotion.h"
 
 #ifndef _WIN32
   #include <sys/time.h>   // for gettimeofday()
@@ -24,7 +25,8 @@ int main(int argc, char** argv)
 
     //CSensorUSBPhidgets sms;
     //CSensorMacUSBONavi sms;
-    CSensorLinuxUSBONavi sms;
+    //CSensorLinuxUSBONavi sms;
+    CSensorWitMotion sms;
 
     if (sms.detect()) {
        double tstart = dtime(), tend;
