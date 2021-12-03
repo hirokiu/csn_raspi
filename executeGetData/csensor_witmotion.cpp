@@ -59,8 +59,6 @@ void CSensorWitMotion::closePort()
 
     assert(m_fd);
     close(m_fd);
-
-    //return 0;
 }
 
 bool CSensorWitMotion::detect()
@@ -196,12 +194,10 @@ switch( N_SPEED )
     }
     printf("set done!\n");
 
-    //setType(SENSOR_TEST);
     setType(SENSOR_USB);
     setPort((int) getTypeEnum());
 
     fprintf(stdout, "WitMotion sensor %s detected.\n",getTypeStr());
-    //memset(&r_buf, 0x00, 1024);
     bzero(r_buf,1024);
     return true;
 
@@ -236,52 +232,8 @@ bool CSensorWitMotion::read_xyz(float& x1, float& y1, float& z1)
         for (int i=0;i<ret;i++)
         {
             ParseData(r_buf[i]);
-/*
-            static char chrBuf[100];
-            static unsigned char chrCnt=0;
-            signed short sData[4];
-            unsigned char j;
-            char cTemp=0;
-
-            chrBuf[chrCnt++]=r_buf[i];
-            if (chrCnt<11) return false;
-            for (j=0;j<10;j++) cTemp+=chrBuf[j];
-            if( (chrBuf[0] != 0x55) || ((chrBuf[1]&0x50) != 0x50) || (cTemp != chrBuf[10]) )
-            {
-                printf("Error:%x %x\r\n",chrBuf[0],chrBuf[1]);
-                memcpy(&chrBuf[0],&chrBuf[1],10);
-                chrCnt--;
-                return false;
-            }
-
-            memcpy(&sData[0],&chrBuf[2],8);
-            switch(chrBuf[1])
-            {
-                case 0x51:
-					for (i=0;i<3;i++) a[i] = (float)sData[i]/32768.0*16.0;
-                    x1 = (float)sData[0]/32768.0*16.0;
-                    y1 = (float)sData[1]/32768.0*16.0;
-                    z1 = (float)sData[2]/32768.0*16.0;
-					printf("acc : %6.16f %6.16f %6.16f ",x1,y1,z1);
-                    break;
-                //  TODO: Angleなど他のデータ用
-                case 0x52:
-                    for (j=0;j<3;j++) w[j] = (float)sData[j]/32768.0*2000.0;
-                    //printf("w:%7.3f %7.3f %7.3f ",w[0],w[1],w[2]);
-                    break;
-                case 0x53:
-                    for (j=0;j<3;j++) Angle[j] = (float)sData[j]/32768.0*180.0;
-                    //printf("A:%7.3f %7.3f %7.3f ",Angle[0],Angle[1],Angle[2]);
-                    break;
-                case 0x54:
-                    for (j=0;j<3;j++) h[j] = (float)sData[j];
-                    //printf("h:%4.0f %4.0f %4.0f ",h[0],h[1],h[2]);
-                    break;
-            }
-            chrCnt=0;
-            */
         }
-        x1 = a[0]; y1 = a[1]; z1 = a[2];  // preserve values
+        x1 = a[0]; y1 = a[1]; z1 = a[2];  // current values
         x0 = x1; y0 = y1; z0 = z1;  // preserve values
         bRet = true;
     }
@@ -365,55 +317,3 @@ void CSensorWitMotion::ParseData(char chr)
         }
         chrCnt=0;
 }
-
-/*
-int main(void)
-{
-    char r_buf[1024];
-    bzero(r_buf,1024);
-	time_t now;
-
-    fd = uart_open(fd,"/dev/ttyUSB0"); //串口号/dev/ttySn,USB口号/dev/ttyUSBn
-    if(fd == -1)
-    {
-        fprintf(stderr,"uart_open error\n");
-        exit(EXIT_FAILURE);
-    }
-
-    if(uart_set(fd,BAUD,8,'N',1) == -1)
-    {
-        fprintf(stderr,"uart set failed!\n");
-        exit(EXIT_FAILURE);
-    }
-
-    FILE *fp;
-    fp = fopen("Record.txt","w");
-    while(1)
-    {
-        time(&now);
-        ret = recv_data(fd,r_buf,44);
-        //printf("ret:%d ", ret);
-        if(ret == -1)
-        {
-            fprintf(stderr,"uart read failed!\n");
-            exit(EXIT_FAILURE);
-        }
-        for (int i=0;i<ret;i++) {
-            //fprintf(fp,"%2X ",r_buf[i]);
-            ParseData(r_buf[i]);
-            //fprintf(fp, "\r\nT:%s a:%6.16f %6.16f %6.16f ", asctime(localtime(&now)),a[0],a[1],a[2]);
-        }
-        fprintf(fp, "\r\nT:%s ,%6.16f, %6.16f, %6.16f ", asctime(localtime(&now)),a[0],a[1],a[2]);
-        usleep(10000);
-    }
-
-    ret = uart_close(fd);
-    if(ret == -1)
-    {
-        fprintf(stderr,"uart_close error\n");
-        exit(EXIT_FAILURE);
-    }
-
-    exit(EXIT_SUCCESS);
-}
-*/

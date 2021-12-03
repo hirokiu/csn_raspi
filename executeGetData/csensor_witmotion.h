@@ -37,8 +37,6 @@ class CSensorWitMotion  : public CSensor
 
         virtual void closePort(); // closes the port if open
         virtual bool detect();   // this detects & initializes the sensor
-        //virtual int uartOpen(int fd,const char *pathname);
-        //virtual int uartSet(int fd,int nSpeed, int nBits, char nEvent, int nStop);
         virtual int send_data(char *send_buffer, int length);
         virtual int recv_data(char* recv_buffer, int length);
         virtual void ParseData(char chr);
