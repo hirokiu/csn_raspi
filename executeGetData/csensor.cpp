@@ -367,7 +367,7 @@ bool CSensor::isStrikeEarthQuake()
                 triggered_xyz = preserve_xyz;
 
                 // Trigger event execute.
-                #ifndef _DEBUG
+                #ifdef _DEBUG
                     sprintf(system_cmd, "nohup %s/tools/propagation.sh %d %f %f %f %f &", BASE_DIR, device_id, startRecordTime, (fabs(STA_x_average)/fabs(LTA_x_average)), (fabs(STA_y_average)/fabs(LTA_z_average)), (fabs(STA_z_average)/fabs(LTA_z_average)) );
                     system(system_cmd);
                 #endif
