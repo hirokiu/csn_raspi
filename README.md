@@ -19,4 +19,4 @@ BWT901CL(WitMotion)センサーから加速度を取得し、STA/LTA法で地震
 - トリガーした時刻の前10秒 + 後ろ60秒分のデータ
 
 ## install
-https://hackmd.io/@hrku/BJSOcmmq_
+[Raspberry Pi設定手順](https://hackmd.io/@hrku/BJSOcmmq_)
