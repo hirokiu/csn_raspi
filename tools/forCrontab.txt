@@ -1,2 +1,2 @@
 */1 * * * * /home/pi/csn_raspi/active/chk.sh
-05 * * * * /home/pi/csn_raspi/tools/dailyDump.sh
+30 * * * * /bin/bash /home/pi/csn_raspi/tools/rsync2nas.sh 
