@@ -38,7 +38,7 @@ const long MAXI = 10001L;  // number of x/y/z/t points in the shared memory arra
 const int EXCEPTION_SHUTDOWN = 1;
 const float DEFAULT_SIGCUTOFF = 3.0f;  // significance cutoff threshold for triggers
 const float cfTimeWindow = 60.0f;  // time window in seconds
-const double DT = 0.02f;          // delta t sampling interval, i.e. target time between points
+const double DT = 0.01f;          // delta t sampling interval, i.e. target time between points
 const double DT_SLOW = 0.10f;      // delta t sampling interval for slow/troublesome machines (i.e. can't keep up at <3 samples per dt=.02)
 
 // hostname
