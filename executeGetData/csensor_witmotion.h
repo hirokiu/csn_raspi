@@ -14,6 +14,7 @@
 #include "csensor.h"
 
 #define STR_LINUX_USB_WITMOTION01     "/dev/ttyUSB*"
+#define STR_MAC_USB_WITMOTION01     "/dev/cu.usbserial*"
 
 // this is an example declaration of a class derived from CSensor
 // you probably will not need to modify CSensor -- just override the necessary functions here
