@@ -35,12 +35,12 @@ int main(int argc, char** argv)
        sm->t0check = sm->t0active + sm->dt;
 
         char filename[128];
-        sprintf(filename, "%s%s/csn.log", BASE_DIR, DATA_DIR);
+        snprintf(filename, sizeof(filename), "%s%s/csn.log", BASE_DIR, DATA_DIR);
 
         writing_file.open(filename, std::ios::out | std::ios::app);
         if (!writing_file.is_open()) {
-            fprintf(stdout, "Couldn't open log file!\n");
-            return false;
+            fprintf(stdout, "Couldn't open log file! - %s\n", filename);
+            return 1;
         }
 
        // assuming we're at 50Hz, run 500 times for 10 seconds of output, note array only holds 10,000 so don't go past that!

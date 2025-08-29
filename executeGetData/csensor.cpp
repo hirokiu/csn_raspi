@@ -38,8 +38,11 @@ int LTA_STA_diff = LTA_array_numbers - STA_array_numbers;
 
 const float limitTimes = 1.5f;
 
-const int triggerLimit = 1;
+const int triggerLimit = 3; //連続してトリガーしたら地震と判定する
 int triggerCount = 0;
+int triggerCount_x = 0;
+int triggerCount_y = 0;
+int triggerCount_z = 0;
 
 const double recordTime = 60.0f; //second
 double startRecordTime;
@@ -343,42 +346,56 @@ bool CSensor::isStrikeEarthQuake()
             }
         #endif
 
+        // Safety check
+        // どれかの軸でLTAかSTAが0.0fの場合、除算で異常値になるのでトリガーしない
         if( ((LTA_x_average == 0.0f) || (STA_x_average == 0.0f)) 
         	&& ((LTA_y_average == 0.0f) || (STA_y_average == 0.0f))
         	&& ((LTA_z_average == 0.0f) || (STA_z_average == 0.0f)) ) return false;
 
-		if( (fabs(LTA_x_average * limitTimes) < fabs(STA_x_average))
-			|| (fabs(LTA_y_average * limitTimes) < fabs(STA_y_average))
-			|| (fabs(LTA_z_average * limitTimes) < fabs(STA_z_average)) ) {
-			triggerCount++;
+        // X Y Z axis check
+        // x or y or z それぞれで連続してトリガーしたかチェックするよう修正
+        // どれかの方向でトリガーしたらOKだが、どの方向でトリガーしたかをログに残す
+		if( fabs(LTA_x_average * limitTimes) < fabs(STA_x_average) ){
+            triggerCount_x++;
+        } else {
+            triggerCount_x = 0;
+        }
+		if( fabs(LTA_y_average * limitTimes) < fabs(STA_y_average) ){
+            triggerCount_y++;
+        } else {
+            triggerCount_y = 0;
+        }
+		if( fabs(LTA_z_average * limitTimes) < fabs(STA_z_average) ){
+            triggerCount_z++;
+        } else {
+            triggerCount_z = 0;
+        }
 
+        #ifdef _DEBUG
+            fprintf(stdout, "X: %f %f %f %f %f  - Trigger COUNT = %d\n\n", LTA_x, STA_x, LTA_x_average, STA_x_average, (LTA_x_average - STA_x_average), triggerCount);
+            fprintf(stdout, "Y: %f %f %f %f %f  - Trigger COUNT = %d\n\n", LTA_y, STA_y, LTA_y_average, STA_y_average, (LTA_y_average - STA_y_average), triggerCount);
+            fprintf(stdout, "Z: %f %f %f %f %f  - Trigger COUNT = %d\n\n", LTA_z, STA_z, LTA_z_average, STA_z_average, (LTA_z_average - STA_z_average), triggerCount);
+        #endif
+
+        if( (triggerCount_x >= triggerLimit) || (triggerCount_y >= triggerLimit) || (triggerCount_z >= triggerLimit) ){
+            triggerCount_x = 0;
+            triggerCount_y = 0;
+            triggerCount_z = 0;
+            startRecordTime = preserve_xyz.back().tmp_id_t;
+            //printf("Recording starts at %f\n", startRecordTime);	//for logging
+
+            // make triggerd data
+            triggered_xyz = preserve_xyz;
+
+            // Trigger event execute.
             #ifdef _DEBUG
-				fprintf(stdout, "X: %f %f %f %f %f  - Trigger COUNT = %d\n\n", LTA_x, STA_x, LTA_x_average, STA_x_average, (LTA_x_average - STA_x_average), triggerCount);
-				fprintf(stdout, "Y: %f %f %f %f %f  - Trigger COUNT = %d\n\n", LTA_y, STA_y, LTA_y_average, STA_y_average, (LTA_y_average - STA_y_average), triggerCount);
-				fprintf(stdout, "Z: %f %f %f %f %f  - Trigger COUNT = %d\n\n", LTA_z, STA_z, LTA_z_average, STA_z_average, (LTA_z_average - STA_z_average), triggerCount);
+                snprintf(system_cmd, sizeof(filename), "nohup %s/tools/propagation.sh %d %f %f %f %f &", BASE_DIR, device_id, startRecordTime, (fabs(STA_x_average)/fabs(LTA_x_average)), (fabs(STA_y_average)/fabs(LTA_z_average)), (fabs(STA_z_average)/fabs(LTA_z_average)) );
+                system(system_cmd);
             #endif
 
-			if( triggerCount == triggerLimit ){
-				triggerCount = 0;
-				startRecordTime = preserve_xyz.back().tmp_id_t;
-				//printf("Recording starts at %f\n", startRecordTime);	//for logging
-
-                // make triggerd data
-                triggered_xyz = preserve_xyz;
-
-                // Trigger event execute.
-                #ifdef _DEBUG
-                    sprintf(system_cmd, "nohup %s/tools/propagation.sh %d %f %f %f %f &", BASE_DIR, device_id, startRecordTime, (fabs(STA_x_average)/fabs(LTA_x_average)), (fabs(STA_y_average)/fabs(LTA_z_average)), (fabs(STA_z_average)/fabs(LTA_z_average)) );
-                    system(system_cmd);
-                #endif
-
-				return true;
-			}
-			else return false;
-		} else {
-			triggerCount = 0;
-			return false;
-		}
+            return true;
+        }
+        else return false;
 	}
 	else return false;
 }
@@ -386,7 +403,7 @@ bool CSensor::isStrikeEarthQuake()
 bool CSensor::outputEarthQuake(){
 
     char filename[128];
-    sprintf(filename, "%s%s/%03d_%f%s", BASE_DIR, TRIG_DIR, device_id, startRecordTime, FILE_EXTENSION);
+    snprintf(filename, sizeof(filename), "%s%s/%03d_%f%s", BASE_DIR, TRIG_DIR, device_id, startRecordTime, FILE_EXTENSION);
 
 	std::ofstream ofs( filename );
     if (!ofs.is_open()) {

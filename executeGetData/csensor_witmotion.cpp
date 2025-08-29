@@ -72,7 +72,7 @@ bool CSensorWitMotion::detect()
     // use glob to match names, if count is > 0, we found a match
     glob_t gt;
     memset(&gt, 0x00, sizeof(glob_t));
-    if (glob(STR_LINUX_USB_WITMOTION01, GLOB_NOCHECK, NULL, &gt) || !gt.gl_pathc) {  // either glob failed or no match
+    if (glob(STR_MAC_USB_WITMOTION01, GLOB_NOCHECK, NULL, &gt) || !gt.gl_pathc) {  // either glob failed or no match
         // device string failed, but try the new string onavi (really Exar USB driver) may be using
         //if (glob(STR_USB_ONAVI02, GLOB_NOCHECK, NULL, &gt) || !gt.gl_matchc) {  // either glob failed or no match
             globfree(&gt);
