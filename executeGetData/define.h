@@ -47,7 +47,7 @@ const double DT_SLOW = 0.10f;      // delta t sampling interval for slow/trouble
 const int device_id = ; // set device id.
 
 // Change BASE_DIR to your project directory.
-#define BASE_DIR "/Users/**HOGEHOGE**/Documents/git/csn_raspi"
+#define BASE_DIR "/home/pi/csn_raspi"
 #define TRIG_DIR "/earthquakes"
 #define DATA_DIR "/data"
 #define FILE_EXTENSION ".csv"
